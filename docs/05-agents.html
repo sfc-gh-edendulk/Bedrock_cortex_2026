@@ -232,7 +232,7 @@ $$</span>;</code></pre>
 <span class="comment">-- Get these from your CloudFormation outputs</span>
 <span class="keyword">CREATE OR REPLACE SECRET</span> AWS_CREDENTIALS
     TYPE = GENERIC_STRING
-    SECRET_STRING = <span class="string">'{"access_key_id": "YOUR_ACCESS_KEY", "secret_access_key": "YOUR_SECRET_KEY"}'</span>;
+    SECRET_STRING = <span class="string">'{"access_key_id": "&lt;PASTE_KEY_HERE&gt;", "secret_access_key": "&lt;PASTE_SECRET_HERE&gt;"}'</span>;
 
 <span class="comment">-- Create external access integration</span>
 <span class="keyword">CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION</span> BEDROCK_ACCESS
