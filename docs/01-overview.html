@@ -17,6 +17,7 @@
         main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
         .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
         h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h2.aws-header { border-bottom-color: var(--aws-orange); }
         h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
         .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
         .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
@@ -32,11 +33,17 @@
         th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { background: var(--light-bg); }
         .tech-card { display: flex; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; margin: 1rem 0; }
+        .tech-card.aws { background: #fff8f0; border-left: 3px solid var(--aws-orange); }
+        .tech-card.snowflake { background: #f0faff; border-left: 3px solid var(--snowflake-blue); }
         .tech-icon { font-size: 2.5rem; }
-        .tech-content h4 { margin: 0 0 0.5rem 0; color: var(--snowflake-blue); }
+        .tech-content h4 { margin: 0 0 0.5rem 0; color: var(--aws-orange); }
+        .tech-content.snowflake h4 { color: var(--snowflake-blue); }
         .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
         footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
         footer a { color: var(--snowflake-blue); }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+        .badge-primary { background: var(--aws-orange); color: white; }
+        .badge-optional { background: #6c757d; color: white; }
     </style>
 </head>
 <body>
@@ -84,11 +91,91 @@
         </div>
         
         <div class="card">
-            <h2>❄️ Snowflake Technologies</h2>
+            <h2 class="aws-header">☁️ AWS Technologies</h2>
+            <p>Amazon Web Services provides the foundational cloud infrastructure and AI services that power this workshop.</p>
             
-            <div class="tech-card">
-                <span class="tech-icon">🔍</span>
+            <div class="tech-card aws">
+                <span class="tech-icon">🏗️</span>
                 <div class="tech-content">
+                    <h4>AWS Cloud Infrastructure</h4>
+                    <p>
+                        AWS provides the underlying compute, networking, and security infrastructure. 
+                        In this workshop, AWS hosts the Bedrock Agent orchestration layer and provides 
+                        secure connectivity between services. Your Snowflake account also runs on AWS 
+                        infrastructure in the <code>us-west-2</code> region.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="tech-card aws">
+                <span class="tech-icon">🪣</span>
+                <div class="tech-content">
+                    <h4>Amazon S3 (Simple Storage Service)</h4>
+                    <p>
+                        S3 is the backbone of data storage for this workshop. Workshop data (FOMC PDFs, 
+                        revenue CSVs) is hosted in public S3 buckets and loaded into Snowflake stages. 
+                        S3 provides durable, scalable object storage that integrates seamlessly with 
+                        both AWS services and Snowflake's external stages.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="tech-card aws">
+                <span class="tech-icon">🧠</span>
+                <div class="tech-content">
+                    <h4>Amazon Bedrock</h4>
+                    <p>
+                        A fully managed service that provides access to leading foundation models (Claude, 
+                        Llama, Titan, and more) through a single API. Bedrock handles the heavy lifting 
+                        of model hosting, scaling, and security—no infrastructure management required.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="tech-card aws">
+                <span class="tech-icon">🤖</span>
+                <div class="tech-content">
+                    <h4>Agents for Amazon Bedrock</h4>
+                    <p>
+                        The primary orchestration layer for this workshop. Bedrock Agents can execute 
+                        multi-step tasks, call external APIs (including Snowflake), and intelligently 
+                        route questions to the right tools. They use Lambda functions to connect to 
+                        Snowflake's Cortex Search and Cortex Analyst capabilities.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="tech-card aws">
+                <span class="tech-icon">⚡</span>
+                <div class="tech-content">
+                    <h4>AWS Lambda</h4>
+                    <p>
+                        Serverless compute that runs the action groups for Bedrock Agents. Lambda functions 
+                        connect to Snowflake, execute Cortex Search queries and Cortex Analyst requests, 
+                        and return results to the agent—all without managing servers.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="tech-card aws">
+                <span class="tech-icon">🔐</span>
+                <div class="tech-content">
+                    <h4>AWS Secrets Manager</h4>
+                    <p>
+                        Securely stores Snowflake credentials used by Lambda functions. This ensures 
+                        sensitive information is never hardcoded and can be rotated without code changes.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>❄️ Snowflake Technologies</h2>
+            <p>Snowflake provides the data platform and AI capabilities that store and process your data.</p>
+            
+            <div class="tech-card snowflake">
+                <span class="tech-icon">🔍</span>
+                <div class="tech-content snowflake">
                     <h4>Snowflake Cortex</h4>
                     <p>
                         A suite of AI features built into Snowflake that use large language models (LLMs) to 
@@ -98,9 +185,9 @@
                 </div>
             </div>
             
-            <div class="tech-card">
+            <div class="tech-card snowflake">
                 <span class="tech-icon">📄</span>
-                <div class="tech-content">
+                <div class="tech-content snowflake">
                     <h4>Document AI</h4>
                     <p>
                         Native PDF and document parsing using <code>SNOWFLAKE.CORTEX.PARSE_DOCUMENT()</code>. 
@@ -109,42 +196,33 @@
                 </div>
             </div>
             
-            <div class="tech-card">
+            <div class="tech-card snowflake">
                 <span class="tech-icon">🔎</span>
-                <div class="tech-content">
+                <div class="tech-content snowflake">
                     <h4>Cortex Search</h4>
                     <p>
                         Vector-based semantic search that finds relevant information even when exact keywords 
-                        don't match. Powers RAG (Retrieval-Augmented Generation) applications.
+                        don't match. Powers RAG (Retrieval-Augmented Generation) applications. Called by 
+                        Bedrock Agents via Lambda to search FOMC documents.
                     </p>
                 </div>
             </div>
             
-            <div class="tech-card">
+            <div class="tech-card snowflake">
                 <span class="tech-icon">📊</span>
-                <div class="tech-content">
+                <div class="tech-content snowflake">
                     <h4>Cortex Analyst</h4>
                     <p>
                         Converts natural language questions into SQL queries. Ask "What was revenue last month?" 
-                        and get accurate results without writing SQL yourself.
+                        and get accurate results without writing SQL yourself. Called by Bedrock Agents to 
+                        answer data questions.
                     </p>
                 </div>
             </div>
             
-            <div class="tech-card">
-                <span class="tech-icon">🤖</span>
-                <div class="tech-content">
-                    <h4>Cortex Agents</h4>
-                    <p>
-                        AI orchestrators that combine multiple tools (search, analyst, custom functions) to 
-                        answer complex questions that require information from different sources.
-                    </p>
-                </div>
-            </div>
-            
-            <div class="tech-card">
+            <div class="tech-card snowflake">
                 <span class="tech-icon">🎯</span>
-                <div class="tech-content">
+                <div class="tech-content snowflake">
                     <h4>Semantic Views</h4>
                     <p>
                         Define your data in business terms so Cortex Analyst understands what "revenue," 
@@ -152,29 +230,15 @@
                     </p>
                 </div>
             </div>
-        </div>
-        
-        <div class="card">
-            <h2>☁️ AWS Technologies</h2>
             
-            <div class="tech-card">
-                <span class="tech-icon">🧠</span>
-                <div class="tech-content">
-                    <h4>Amazon Bedrock</h4>
-                    <p>
-                        A fully managed service that provides access to leading foundation models (Claude, 
-                        Llama, and more) through a single API. No infrastructure management required.
-                    </p>
-                </div>
-            </div>
-            
-            <div class="tech-card">
+            <div class="tech-card snowflake">
                 <span class="tech-icon">🤖</span>
-                <div class="tech-content">
-                    <h4>Agents for Amazon Bedrock</h4>
+                <div class="tech-content snowflake">
+                    <h4>Cortex Agents <span class="badge badge-optional">Optional</span></h4>
                     <p>
-                        Build AI agents that can execute multi-step tasks, call external APIs, and retrieve 
-                        information from various sources. Similar to Cortex Agents but running in AWS.
+                        Native Snowflake agents that can orchestrate tools without external access. 
+                        An alternative to Bedrock Agents when you want everything to run within Snowflake's 
+                        security boundary.
                     </p>
                 </div>
             </div>
@@ -184,8 +248,8 @@
             <h2>🎯 Use Case: Unified Data Assistant</h2>
             
             <p>
-                In this workshop, we'll build a <strong>conversational assistant</strong> that can answer questions 
-                from two different types of data:
+                In this workshop, we'll build a <strong>conversational assistant</strong> powered by 
+                <strong>Amazon Bedrock Agents</strong> that can answer questions from two different types of data:
             </p>
             
             <table>
@@ -217,51 +281,53 @@
         </div>
         
         <div class="card">
-            <h2>🔀 Choose Your Path</h2>
+            <h2>🔀 Agent Options</h2>
             
-            <p>This workshop offers flexibility in how you orchestrate your AI application:</p>
+            <p>This workshop uses <strong>Amazon Bedrock Agents</strong> as the primary orchestration layer:</p>
             
             <table>
                 <tr>
                     <th>Option</th>
-                    <th>Best For</th>
-                    <th>Pros</th>
+                    <th>Description</th>
+                    <th>Benefits</th>
                 </tr>
                 <tr>
-                    <td><strong>Option A:</strong> Snowflake Cortex Agent</td>
-                    <td>Snowflake-first teams</td>
+                    <td><strong>Amazon Bedrock Agents</strong> <span class="badge badge-primary">Primary</span></td>
+                    <td>AI orchestration running in AWS, calling Snowflake via Lambda</td>
                     <td>
                         <ul>
-                            <li>Runs entirely in Snowflake</li>
-                            <li>No external services needed</li>
-                            <li>Simplified security</li>
+                            <li>Access to Claude, Llama, Titan models</li>
+                            <li>Full AWS service integration</li>
+                            <li>Enterprise-grade scalability</li>
+                            <li>Flexible action group configuration</li>
                         </ul>
                     </td>
                 </tr>
                 <tr>
-                    <td><strong>Option B:</strong> Amazon Bedrock Agent</td>
-                    <td>AWS-first teams</td>
+                    <td><strong>Snowflake Cortex Agents</strong> <span class="badge badge-optional">Optional</span></td>
+                    <td>Native Snowflake orchestration, no external access required</td>
                     <td>
                         <ul>
-                            <li>Access to more models</li>
-                            <li>Integration with AWS services</li>
-                            <li>Flexible orchestration</li>
+                            <li>Runs entirely within Snowflake</li>
+                            <li>No cross-cloud networking</li>
+                            <li>Simpler security model</li>
+                            <li>Ideal for Snowflake-only environments</li>
                         </ul>
                     </td>
                 </tr>
             </table>
             
-            <p>Both options use the same Snowflake data and Cortex tools—only the orchestration layer differs.</p>
+            <p>Both options use the same Snowflake data and Cortex tools (Search, Analyst)—only the orchestration layer differs.</p>
         </div>
         
         <div class="card">
             <h2>📚 What You'll Learn</h2>
             
             <ol>
-                <li><strong>Data Setup:</strong> Create databases, load data, configure access</li>
+                <li><strong>Data Setup:</strong> Create databases, load data from S3, configure access</li>
                 <li><strong>Document Processing:</strong> Parse PDFs with Document AI, build vector search</li>
                 <li><strong>Semantic Modeling:</strong> Create a Semantic View for natural language SQL</li>
-                <li><strong>Agent Building:</strong> Configure AI agents that orchestrate multiple tools</li>
+                <li><strong>Agent Building:</strong> Deploy Bedrock Agents with Lambda action groups</li>
                 <li><strong>Application Development:</strong> Build interactive chat interfaces</li>
             </ol>
         </div>

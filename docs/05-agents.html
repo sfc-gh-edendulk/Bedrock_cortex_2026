@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Agents - AWS + Snowflake GenAI Workshop</title>
+    <title>Amazon Bedrock Agents - AWS + Snowflake GenAI Workshop</title>
     <style>
         :root { --aws-orange: #FF9900; --snowflake-blue: #29B5E8; --dark-bg: #232F3E; --light-bg: #f5f7fa; --text-color: #333; --border-color: #ddd; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,7 +16,8 @@
         nav a:hover, nav a.active { background: var(--snowflake-blue); color: white; }
         main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
         .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
-        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--aws-orange); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h2.snowflake { border-bottom-color: var(--snowflake-blue); }
         h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
         .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
         .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
@@ -30,13 +31,10 @@
         pre code { background: none; padding: 0; color: inherit; }
         ul, ol { margin: 1rem 0 1rem 1.5rem; }
         li { margin: 0.5rem 0; }
-        .tabs { display: flex; gap: 0; margin-bottom: 0; }
-        .tab { padding: 1rem 1.5rem; background: #e9ecef; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; border-radius: 8px 8px 0 0; }
-        .tab.active { background: var(--snowflake-blue); color: white; }
-        .tab.aws { background: #ffedd5; }
-        .tab.aws.active { background: var(--aws-orange); color: white; }
-        .tab-content { display: none; border: 1px solid var(--border-color); border-top: none; padding: 1.5rem; background: white; border-radius: 0 8px 8px 8px; }
-        .tab-content.active { display: block; }
+        .optional-section { background: #f8f9fa; border: 2px dashed var(--border-color); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .optional-section h3 { margin-top: 0; color: #666; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem; }
+        .badge-optional { background: #6c757d; color: white; }
         .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
         footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
         .comment { color: #6a9955; }
@@ -49,8 +47,8 @@
 </head>
 <body>
     <header>
-        <h1>🤖 Module 5: AI Agents</h1>
-        <p>Build intelligent assistants that orchestrate multiple tools</p>
+        <h1>🤖 Module 5: Amazon Bedrock Agents</h1>
+        <p>Build intelligent assistants powered by AWS</p>
     </header>
     
     <nav>
@@ -61,7 +59,7 @@
             <li><a href="02-snowflake-setup.html">Snowflake Setup</a></li>
             <li><a href="03-document-ai.html">Document AI</a></li>
             <li><a href="04-semantic-view.html">Semantic View</a></li>
-            <li><a href="05-agents.html" class="active">AI Agents</a></li>
+            <li><a href="05-agents.html" class="active">Bedrock Agents</a></li>
             <li><a href="06-application.html">Application</a></li>
             <li><a href="07-cleanup.html">Cleanup</a></li>
         </ul>
@@ -71,178 +69,125 @@
         <div class="card">
             <h2>⏱️ Module Overview</h2>
             <p><strong>Estimated time:</strong> 20 minutes</p>
-            <p>In this module, you'll create an AI Agent that can answer questions from <strong>both</strong> 
-            your document collection (via Cortex Search) and your revenue data (via Cortex Analyst).</p>
+            <p>In this module, you'll deploy an <strong>Amazon Bedrock Agent</strong> that orchestrates 
+            Snowflake's Cortex tools to answer questions from both documents and structured data.</p>
             
-            <div class="alert alert-info">
+            <div class="alert alert-warning">
                 <strong>💡 What is an AI Agent?</strong> An Agent is an AI orchestrator that decides which 
-                tools to use based on the user's question. It's like a smart assistant that knows when to 
-                search documents vs. query databases.
+                tools to use based on the user's question. Amazon Bedrock Agents use foundation models 
+                like Claude and Titan to intelligently route questions to the right data sources.
             </div>
         </div>
         
         <div class="card">
-            <h2>Choose Your Path</h2>
-            <p>This workshop supports two agent options. <strong>Complete Option A or Option B</strong> (or both if time permits):</p>
+            <h2>☁️ Amazon Bedrock Agent Setup</h2>
+            
+            <p>We'll deploy a Bedrock Agent using CloudFormation that includes:</p>
+            <ul>
+                <li><strong>Bedrock Agent:</strong> AI orchestrator using Claude or Titan models</li>
+                <li><strong>Lambda Functions:</strong> Action groups that call Snowflake Cortex</li>
+                <li><strong>Secrets Manager:</strong> Secure storage for Snowflake credentials</li>
+                <li><strong>IAM Roles:</strong> Permissions for cross-service access</li>
+            </ul>
+            
+            <h3>Step 1: Deploy CloudFormation Stack</h3>
+            
+            <ol>
+                <li>In your <strong>AWS Console</strong>, navigate to <strong>CloudFormation</strong></li>
+                <li>Ensure you're in the <code>us-west-2</code> (Oregon) region</li>
+                <li>Click <strong>Create stack</strong> → <strong>With new resources (standard)</strong></li>
+                <li>Select <strong>Upload a template file</strong></li>
+                <li>Upload <code>aws/bedrock_agent_stack.yaml</code> from the workshop repository</li>
+                <li>Click <strong>Next</strong></li>
+            </ol>
+            
+            <h3>Step 2: Configure Stack Parameters</h3>
+            
+            <p>Fill in the following parameters:</p>
             
             <table>
                 <tr>
-                    <th>Option</th>
+                    <th>Parameter</th>
+                    <th>Value</th>
                     <th>Description</th>
-                    <th>Best For</th>
                 </tr>
                 <tr>
-                    <td><strong>Option A: Cortex Agent</strong></td>
-                    <td>Native Snowflake agent, runs entirely in Snowflake</td>
-                    <td>Snowflake-first teams, simplest setup</td>
+                    <td><code>SnowflakeAccountId</code></td>
+                    <td>Your account identifier</td>
+                    <td>e.g., <code>xy12345.us-west-2.aws</code></td>
                 </tr>
                 <tr>
-                    <td><strong>Option B: Bedrock Agent</strong></td>
-                    <td>AWS agent with Lambda functions calling Snowflake</td>
-                    <td>AWS-first teams, access to Claude/Titan models</td>
+                    <td><code>SnowflakeUser</code></td>
+                    <td>Your username</td>
+                    <td>The user you log in with</td>
+                </tr>
+                <tr>
+                    <td><code>SnowflakePassword</code></td>
+                    <td>Your password</td>
+                    <td>Stored securely in Secrets Manager</td>
                 </tr>
             </table>
+            
+            <div class="alert alert-info">
+                <strong>🔐 Security Note:</strong> Your Snowflake password is stored in AWS Secrets Manager 
+                and never exposed in logs or code. Lambda functions retrieve it securely at runtime.
+            </div>
+            
+            <h3>Step 3: Create the Stack</h3>
+            
+            <ol>
+                <li>Click <strong>Next</strong> on the Configure stack options page</li>
+                <li>Scroll down and check the box: <em>"I acknowledge that AWS CloudFormation might create IAM resources"</em></li>
+                <li>Click <strong>Submit</strong></li>
+            </ol>
+            
+            <div class="alert alert-warning">
+                <strong>⏱️ Wait Time:</strong> Stack creation takes <strong>5-10 minutes</strong>. 
+                Wait until the status shows <strong>CREATE_COMPLETE</strong> before proceeding.
+            </div>
+            
+            <h3>Step 4: Note the Outputs</h3>
+            
+            <p>Once complete, go to the <strong>Outputs</strong> tab and note these values:</p>
+            <ul>
+                <li><strong>BedrockAgentId:</strong> The Agent ID (e.g., <code>ABCD1234XY</code>)</li>
+                <li><strong>BedrockAgentAliasId:</strong> The Alias ID for the agent</li>
+            </ul>
         </div>
         
         <div class="card">
-            <h2>Select Your Agent Type</h2>
+            <h2>🔗 Connect Snowflake to Bedrock</h2>
             
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('cortex')">❄️ Option A: Cortex Agent</button>
-                <button class="tab aws" onclick="showTab('bedrock')">☁️ Option B: Bedrock Agent</button>
-            </div>
+            <p>Now we'll create a Snowflake function that can call your Bedrock Agent.</p>
             
-            <div id="cortex-content" class="tab-content active">
-                <h3>Option A: Snowflake Cortex Agent</h3>
-                
-                <p>The Cortex Agent orchestrates tools natively within Snowflake. We'll give it two tools:</p>
-                <ul>
-                    <li><strong>fomc_search:</strong> Searches FOMC meeting documents</li>
-                    <li><strong>revenue_analyst:</strong> Queries revenue data via Semantic View</li>
-                </ul>
-                
-                <h4>Step 1: Create the Agent</h4>
-                <pre><code><span class="keyword">USE DATABASE</span> WORKSHOP_DB;
+            <h3>Step 1: Create External Access Integration</h3>
+            
+            <pre><code><span class="keyword">USE DATABASE</span> WORKSHOP_DB;
 <span class="keyword">USE SCHEMA</span> AGENTS;
+<span class="keyword">USE WAREHOUSE</span> WORKSHOP_WH;
 
-<span class="comment">-- Create the Cortex Agent</span>
-<span class="keyword">CREATE OR REPLACE CORTEX AGENT</span> WORKSHOP_AGENT
-    MODEL = <span class="string">'claude-3-5-sonnet'</span>
-    TOOLS = (
-        <span class="comment">-- Tool 1: Search FOMC documents</span>
-        {
-            <span class="string">'name'</span>: <span class="string">'fomc_search'</span>,
-            <span class="string">'type'</span>: <span class="string">'cortex_search'</span>,
-            <span class="string">'description'</span>: <span class="string">'Search Federal Reserve FOMC meeting documents for information about monetary policy, inflation, interest rates, and economic outlook.'</span>,
-            <span class="string">'service'</span>: <span class="string">'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE'</span>
-        },
-        <span class="comment">-- Tool 2: Query revenue data</span>
-        {
-            <span class="string">'name'</span>: <span class="string">'revenue_analyst'</span>,
-            <span class="string">'type'</span>: <span class="string">'cortex_analyst'</span>,
-            <span class="string">'description'</span>: <span class="string">'Query company revenue, profit, and sales data by time period, product line, or region.'</span>,
-            <span class="string">'semantic_view'</span>: <span class="string">'WORKSHOP_DB.REVENUE_TIMESERIES.REVENUE_SEMANTIC_VIEW'</span>
-        }
-    )
-    SYSTEM_PROMPT = <span class="string">$$
-You are a helpful business analyst assistant. You help users find information 
-from two sources:
-
-1. FOMC Documents: Federal Reserve meeting minutes containing discussions about 
-   monetary policy, inflation, interest rates, and economic conditions.
-   
-2. Revenue Data: Company financial data including daily revenue, costs, profit, 
-   and breakdowns by product and region.
-
-When answering questions:
-- For questions about the Fed, inflation, interest rates, or economic policy, 
-  use the fomc_search tool
-- For questions about revenue, profit, sales, products, or regions, use the 
-  revenue_analyst tool
-- Always cite your sources
-- If a question requires both sources, use both tools and synthesize the answer
-$$</span>;</code></pre>
-                
-                <h4>Step 2: Test the Agent</h4>
-                <pre><code><span class="comment">-- Test: Ask about documents</span>
-<span class="keyword">SELECT</span> <span class="function">SNOWFLAKE.CORTEX.AGENT</span>(
-    <span class="string">'WORKSHOP_DB.AGENTS.WORKSHOP_AGENT'</span>,
-    <span class="string">'What did the Federal Reserve say about inflation in recent meetings?'</span>
-) <span class="keyword">AS</span> RESPONSE;
-
-<span class="comment">-- Test: Ask about data</span>
-<span class="keyword">SELECT</span> <span class="function">SNOWFLAKE.CORTEX.AGENT</span>(
-    <span class="string">'WORKSHOP_DB.AGENTS.WORKSHOP_AGENT'</span>,
-    <span class="string">'What was our total revenue last month by region?'</span>
-) <span class="keyword">AS</span> RESPONSE;
-
-<span class="comment">-- Test: Combined question</span>
-<span class="keyword">SELECT</span> <span class="function">SNOWFLAKE.CORTEX.AGENT</span>(
-    <span class="string">'WORKSHOP_DB.AGENTS.WORKSHOP_AGENT'</span>,
-    <span class="string">'Given the Fed''s recent stance on interest rates, how might that impact our revenue forecasts?'</span>
-) <span class="keyword">AS</span> RESPONSE;</code></pre>
-                
-                <div class="alert alert-success">
-                    <strong>✅ Cortex Agent Complete!</strong> Your agent can now answer questions from both 
-                    documents and structured data. Skip to "Test Your Agent" below or try Option B as well.
-                </div>
-            </div>
-            
-            <div id="bedrock-content" class="tab-content">
-                <h3>Option B: Amazon Bedrock Agent</h3>
-                
-                <p>This option creates a Bedrock Agent in AWS that calls back to Snowflake for data. 
-                It demonstrates cross-cloud integration.</p>
-                
-                <h4>Step 1: Deploy CloudFormation Stack</h4>
-                <p>First, we'll deploy the AWS infrastructure using CloudFormation.</p>
-                
-                <ol>
-                    <li>In your AWS Console, go to <strong>CloudFormation</strong></li>
-                    <li>Click <strong>Create stack</strong> → <strong>With new resources</strong></li>
-                    <li>Select <strong>Upload a template file</strong></li>
-                    <li>Upload the file <code>aws/bedrock_agent_stack.yaml</code> from the workshop repo</li>
-                    <li>Fill in the parameters:
-                        <ul>
-                            <li><strong>SnowflakeAccountId:</strong> Your Snowflake account identifier</li>
-                            <li><strong>SnowflakeUser:</strong> Your Snowflake username</li>
-                            <li><strong>SnowflakePassword:</strong> Your Snowflake password (stored in Secrets Manager)</li>
-                        </ul>
-                    </li>
-                    <li>Click through and <strong>Create stack</strong></li>
-                </ol>
-                
-                <div class="alert alert-warning">
-                    <strong>⏱️ Note:</strong> Stack creation takes 5-10 minutes. Wait for status: CREATE_COMPLETE.
-                </div>
-                
-                <h4>Step 2: Create External Access in Snowflake</h4>
-                <p>Allow Snowflake to call the Bedrock Agent:</p>
-                
-                <pre><code><span class="keyword">USE DATABASE</span> WORKSHOP_DB;
-<span class="keyword">USE SCHEMA</span> AGENTS;
-
-<span class="comment">-- Create network rule for AWS Bedrock</span>
+<span class="comment">-- Create network rule to allow connections to Bedrock</span>
 <span class="keyword">CREATE OR REPLACE NETWORK RULE</span> BEDROCK_NETWORK_RULE
     MODE = EGRESS
     TYPE = HOST_PORT
     VALUE_LIST = (<span class="string">'bedrock-agent-runtime.us-west-2.amazonaws.com:443'</span>);
 
 <span class="comment">-- Create secret for AWS credentials</span>
-<span class="comment">-- Get these from your CloudFormation outputs</span>
-<span class="keyword">CREATE OR REPLACE SECRET</span> AWS_CREDENTIALS
+<span class="comment">-- Replace with your AWS access keys (from IAM user or CloudFormation output)</span>
+<span class="keyword">CREATE OR REPLACE SECRET</span> AWS_BEDROCK_CREDENTIALS
     TYPE = GENERIC_STRING
-    SECRET_STRING = <span class="string">'{"access_key_id": "&lt;PASTE_KEY_HERE&gt;", "secret_access_key": "&lt;PASTE_SECRET_HERE&gt;"}'</span>;
+    SECRET_STRING = <span class="string">'{"access_key_id": "&lt;YOUR_ACCESS_KEY&gt;", "secret_access_key": "&lt;YOUR_SECRET_KEY&gt;"}'</span>;
 
-<span class="comment">-- Create external access integration</span>
-<span class="keyword">CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION</span> BEDROCK_ACCESS
+<span class="comment">-- Create the external access integration</span>
+<span class="keyword">CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION</span> BEDROCK_ACCESS_INTEGRATION
     ALLOWED_NETWORK_RULES = (BEDROCK_NETWORK_RULE)
-    ALLOWED_AUTHENTICATION_SECRETS = (AWS_CREDENTIALS)
+    ALLOWED_AUTHENTICATION_SECRETS = (AWS_BEDROCK_CREDENTIALS)
     ENABLED = <span class="keyword">TRUE</span>;</code></pre>
-                
-                <h4>Step 3: Create Bedrock Agent Function</h4>
-                <pre><code><span class="comment">-- Function to invoke Bedrock Agent from Snowflake</span>
-<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">INVOKE_BEDROCK_AGENT</span>(
+            
+            <h3>Step 2: Create the Bedrock Agent Function</h3>
+            
+            <pre><code><span class="comment">-- Function to invoke Bedrock Agent from Snowflake</span>
+<span class="keyword">CREATE OR REPLACE FUNCTION</span> INVOKE_BEDROCK_AGENT(
     user_query <span class="keyword">VARCHAR</span>,
     session_id <span class="keyword">VARCHAR DEFAULT NULL</span>
 )
@@ -251,8 +196,8 @@ $$</span>;</code></pre>
 RUNTIME_VERSION = <span class="string">'3.11'</span>
 PACKAGES = (<span class="string">'boto3'</span>, <span class="string">'snowflake-snowpark-python'</span>)
 HANDLER = <span class="string">'invoke_agent'</span>
-EXTERNAL_ACCESS_INTEGRATIONS = (BEDROCK_ACCESS)
-SECRETS = (<span class="string">'cred'</span> = AWS_CREDENTIALS)
+EXTERNAL_ACCESS_INTEGRATIONS = (BEDROCK_ACCESS_INTEGRATION)
+SECRETS = (<span class="string">'cred'</span> = AWS_BEDROCK_CREDENTIALS)
 <span class="keyword">AS</span>
 $$
 import boto3
@@ -272,19 +217,23 @@ def invoke_agent(user_query, session_id):
         aws_secret_access_key=creds['secret_access_key']
     )
     
-    # Generate session ID if not provided
+    # Generate session ID if not provided (for conversation continuity)
     if not session_id:
         session_id = str(uuid.uuid4())
     
-    # Invoke the agent (get Agent ID from CloudFormation outputs)
+    # TODO: Replace with your Agent ID and Alias ID from CloudFormation outputs
+    agent_id = 'YOUR_AGENT_ID'
+    agent_alias_id = 'YOUR_ALIAS_ID'
+    
+    # Invoke the Bedrock Agent
     response = client.invoke_agent(
-        agentId='YOUR_AGENT_ID',
-        agentAliasId='YOUR_ALIAS_ID',
+        agentId=agent_id,
+        agentAliasId=agent_alias_id,
         sessionId=session_id,
         inputText=user_query
     )
     
-    # Collect response chunks
+    # Collect streaming response
     result_text = ""
     for event in response['completion']:
         if 'chunk' in event:
@@ -292,44 +241,65 @@ def invoke_agent(user_query, session_id):
     
     return {"response": result_text, "session_id": session_id}
 $$;</code></pre>
-                
-                <h4>Step 4: Test Bedrock Agent</h4>
-                <pre><code><span class="comment">-- Test the Bedrock Agent</span>
-<span class="keyword">SELECT</span> <span class="function">INVOKE_BEDROCK_AGENT</span>(
-    <span class="string">'What are the recent trends in our revenue by region?'</span>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Important:</strong> Replace <code>YOUR_AGENT_ID</code> and <code>YOUR_ALIAS_ID</code> 
+                with the actual values from your CloudFormation stack outputs!
+            </div>
+            
+            <h3>Step 3: Test the Integration</h3>
+            
+            <pre><code><span class="comment">-- Test: Ask about FOMC documents (uses Cortex Search via Lambda)</span>
+<span class="keyword">SELECT</span> INVOKE_BEDROCK_AGENT(
+    <span class="string">'What did the Federal Reserve say about inflation in recent meetings?'</span>
+) <span class="keyword">AS</span> RESPONSE;
+
+<span class="comment">-- Test: Ask about revenue data (uses Cortex Analyst via Lambda)</span>
+<span class="keyword">SELECT</span> INVOKE_BEDROCK_AGENT(
+    <span class="string">'What was our total revenue last month broken down by region?'</span>
+) <span class="keyword">AS</span> RESPONSE;
+
+<span class="comment">-- Test: Combined question requiring both tools</span>
+<span class="keyword">SELECT</span> INVOKE_BEDROCK_AGENT(
+    <span class="string">'Based on recent Fed policy, how might interest rate changes impact our revenue?'</span>
 ) <span class="keyword">AS</span> RESPONSE;</code></pre>
-                
-                <div class="alert alert-success">
-                    <strong>✅ Bedrock Agent Complete!</strong> Your Bedrock Agent is now integrated with Snowflake.
-                </div>
+            
+            <div class="alert alert-success">
+                <strong>✅ Success!</strong> Your Bedrock Agent is now connected to Snowflake and can 
+                orchestrate both Cortex Search (documents) and Cortex Analyst (data) tools!
             </div>
         </div>
         
         <div class="card">
-            <h2>Test Your Agent</h2>
+            <h2>🧪 Test Your Agent</h2>
             
-            <p>Try these sample questions to see your agent in action:</p>
+            <p>Try these sample questions to see your Bedrock Agent in action:</p>
             
             <table>
                 <tr>
                     <th>Question Type</th>
                     <th>Sample Question</th>
-                    <th>Expected Tool</th>
+                    <th>Tool Used</th>
                 </tr>
                 <tr>
                     <td>Document Search</td>
                     <td>"What concerns did the Fed express about inflation?"</td>
-                    <td>fomc_search</td>
+                    <td>Cortex Search</td>
+                </tr>
+                <tr>
+                    <td>Document Search</td>
+                    <td>"How did the Fed view employment trends?"</td>
+                    <td>Cortex Search</td>
                 </tr>
                 <tr>
                     <td>Data Query</td>
                     <td>"Show me revenue trends by product for Q4"</td>
-                    <td>revenue_analyst</td>
+                    <td>Cortex Analyst</td>
                 </tr>
                 <tr>
                     <td>Data Query</td>
                     <td>"Which region has the highest profit margin?"</td>
-                    <td>revenue_analyst</td>
+                    <td>Cortex Analyst</td>
                 </tr>
                 <tr>
                     <td>Combined</td>
@@ -339,14 +309,58 @@ $$;</code></pre>
             </table>
         </div>
         
+        <div class="optional-section">
+            <h3>❄️ Alternative: Snowflake Cortex Agent <span class="badge badge-optional">Optional</span></h3>
+            
+            <p>If you prefer to keep everything within Snowflake (no external AWS access), you can use 
+            <strong>Snowflake Cortex Agents</strong> instead. This is ideal for environments with strict 
+            network policies or when you want simpler security.</p>
+            
+            <pre><code><span class="keyword">USE DATABASE</span> WORKSHOP_DB;
+<span class="keyword">USE SCHEMA</span> AGENTS;
+
+<span class="comment">-- Create native Cortex Agent (no external access needed)</span>
+<span class="keyword">CREATE OR REPLACE CORTEX AGENT</span> WORKSHOP_AGENT
+    MODEL = <span class="string">'claude-3-5-sonnet'</span>
+    TOOLS = (
+        {
+            <span class="string">'name'</span>: <span class="string">'fomc_search'</span>,
+            <span class="string">'type'</span>: <span class="string">'cortex_search'</span>,
+            <span class="string">'description'</span>: <span class="string">'Search FOMC meeting documents for Fed policy information.'</span>,
+            <span class="string">'service'</span>: <span class="string">'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE'</span>
+        },
+        {
+            <span class="string">'name'</span>: <span class="string">'revenue_analyst'</span>,
+            <span class="string">'type'</span>: <span class="string">'cortex_analyst'</span>,
+            <span class="string">'description'</span>: <span class="string">'Query revenue and financial data.'</span>,
+            <span class="string">'semantic_view'</span>: <span class="string">'WORKSHOP_DB.REVENUE_TIMESERIES.REVENUE_SEMANTIC_VIEW'</span>
+        }
+    )
+    SYSTEM_PROMPT = <span class="string">$$You are a business analyst assistant that searches documents and analyzes data.$$</span>;
+
+<span class="comment">-- Test the Cortex Agent</span>
+<span class="keyword">SELECT</span> SNOWFLAKE.CORTEX.AGENT(
+    <span class="string">'WORKSHOP_DB.AGENTS.WORKSHOP_AGENT'</span>,
+    <span class="string">'What was revenue last month by region?'</span>
+) <span class="keyword">AS</span> RESPONSE;</code></pre>
+            
+            <p><strong>When to use Cortex Agent instead of Bedrock:</strong></p>
+            <ul>
+                <li>No external network access allowed</li>
+                <li>Simpler setup (no CloudFormation/Lambda)</li>
+                <li>Everything stays within Snowflake's security boundary</li>
+            </ul>
+        </div>
+        
         <div class="card">
             <h2>🎉 Module Complete!</h2>
             
-            <p>You've successfully created an AI Agent with:</p>
+            <p>You've successfully deployed an Amazon Bedrock Agent with:</p>
             <ul>
-                <li>✅ Multiple tools (document search + data analysis)</li>
-                <li>✅ Intelligent routing based on question type</li>
-                <li>✅ Natural language interface to complex data</li>
+                <li>✅ CloudFormation infrastructure (Agent, Lambda, Secrets)</li>
+                <li>✅ Snowflake External Access Integration</li>
+                <li>✅ Cross-cloud connectivity to Cortex tools</li>
+                <li>✅ Natural language interface to documents and data</li>
             </ul>
             
             <p>In the next module, we'll build a user-friendly chat interface!</p>
@@ -361,17 +375,5 @@ $$;</code></pre>
     <footer>
         <p>AWS + Snowflake GenAI Workshop</p>
     </footer>
-    
-    <script>
-        function showTab(tabId) {
-            // Hide all content
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            
-            // Show selected content
-            document.getElementById(tabId + '-content').classList.add('active');
-            event.target.classList.add('active');
-        }
-    </script>
 </body>
 </html>

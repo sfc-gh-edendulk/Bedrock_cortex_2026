@@ -274,7 +274,7 @@
             <span style="font-size: 2.5rem;">❄️</span>
         </div>
         <h1>AWS + Snowflake GenAI Workshop</h1>
-        <p>Build Intelligent Applications with Cortex AI and Amazon Bedrock</p>
+        <p>Build Intelligent Applications with Amazon Bedrock and Snowflake Cortex</p>
         <div style="margin-top: 1rem;">
             <span class="badge badge-aws">Amazon Bedrock</span>
             <span class="badge badge-snowflake">Snowflake Cortex</span>
@@ -318,22 +318,25 @@
 │         (Snowflake Notebook OR Streamlit App)                   │
 └─────────────────────────┬───────────────────────────────────────┘
                           │
-         ┌────────────────┴────────────────┐
-         │         CHOOSE ONE:             │
-         ▼                                 ▼
-┌─────────────────────┐      ┌─────────────────────────────────┐
-│  Snowflake Cortex   │      │  Amazon Bedrock Agents          │
-│  Agent (Native)     │      │  (via External Access)          │
-└─────────┬───────────┘      └───────────────┬─────────────────┘
-          │                                  │
-          └────────────┬─────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────────┐
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              Amazon Bedrock Agents (Orchestration)              │
+│     Routes questions to the right tool using Claude/Titan       │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+┌─────────────────────────────────────────────────────────────────┐
 │                    Snowflake Cortex Tools                        │
 │  ┌────────────────┐  ┌─────────────────┐  ┌──────────────────┐  │
 │  │ Cortex Search  │  │ Cortex Analyst  │  │   Document AI    │  │
 │  │ (RAG/Vector)   │  │ (Text-to-SQL)   │  │  (PDF Parsing)   │  │
 │  └────────────────┘  └─────────────────┘  └──────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────────┐
+│                 AWS Infrastructure (S3, Lambda)                  │
+│              Data storage, serverless compute, secrets           │
 └─────────────────────────────────────────────────────────────────┘
             </div>
         </div>
@@ -374,8 +377,8 @@
                 </a>
                 
                 <a href="05-agents.html" class="module-card">
-                    <h4>5. AI Agents</h4>
-                    <p>Configure Cortex Agent or Bedrock Agent</p>
+                    <h4>5. Bedrock Agents</h4>
+                    <p>Deploy Amazon Bedrock Agent with Snowflake tools</p>
                     <span class="time">⏱️ 20 minutes</span>
                 </a>
                 
