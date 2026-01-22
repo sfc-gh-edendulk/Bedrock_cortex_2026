@@ -1,0 +1,7 @@
+name: workshop_streamlit
+channels:
+  - snowflake
+dependencies:
+  - pandas
+  - requests
+  - snowflake-snowpark-python

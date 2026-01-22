@@ -1,0 +1,35 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets - never commit these
+*.pem
+*.key
+credentials.json
+secrets.yaml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp

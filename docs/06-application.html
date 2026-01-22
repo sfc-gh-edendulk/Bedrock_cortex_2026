@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Application - AWS + Snowflake GenAI Workshop</title>
+    <style>
+        :root { --aws-orange: #FF9900; --snowflake-blue: #29B5E8; --dark-bg: #232F3E; --light-bg: #f5f7fa; --text-color: #333; --border-color: #ddd; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-color); background: var(--light-bg); }
+        header { background: linear-gradient(135deg, var(--dark-bg) 0%, #37475A 100%); color: white; padding: 1.5rem 2rem; }
+        header h1 { font-size: 1.8rem; }
+        nav { background: white; border-bottom: 1px solid var(--border-color); padding: 1rem; position: sticky; top: 0; z-index: 100; }
+        nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        nav a { text-decoration: none; color: var(--text-color); padding: 0.5rem 1rem; border-radius: 5px; }
+        nav a:hover, nav a.active { background: var(--snowflake-blue); color: white; }
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
+        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
+        .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
+        .alert-warning { background: #fff3e0; border-left: 4px solid var(--aws-orange); }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #28a745; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; margin: 0.5rem 0.5rem 0.5rem 0; }
+        .btn-primary { background: var(--snowflake-blue); color: white; }
+        .btn-secondary { background: var(--aws-orange); color: white; }
+        code { background: #f1f3f5; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: var(--dark-bg); color: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; }
+        pre code { background: none; padding: 0; color: inherit; }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; }
+        li { margin: 0.5rem 0; }
+        .tabs { display: flex; gap: 0; margin-bottom: 0; }
+        .tab { padding: 1rem 1.5rem; background: #e9ecef; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; border-radius: 8px 8px 0 0; }
+        .tab.active { background: var(--snowflake-blue); color: white; }
+        .tab-content { display: none; border: 1px solid var(--border-color); border-top: none; padding: 1.5rem; background: white; border-radius: 0 8px 8px 8px; }
+        .tab-content.active { display: block; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>💻 Module 6: Build Application</h1>
+        <p>Create an interactive chat interface</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="00-prerequisites.html">Prerequisites</a></li>
+            <li><a href="01-overview.html">Overview</a></li>
+            <li><a href="02-snowflake-setup.html">Snowflake Setup</a></li>
+            <li><a href="03-document-ai.html">Document AI</a></li>
+            <li><a href="04-semantic-view.html">Semantic View</a></li>
+            <li><a href="05-agents.html">AI Agents</a></li>
+            <li><a href="06-application.html" class="active">Application</a></li>
+            <li><a href="07-cleanup.html">Cleanup</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <div class="card">
+            <h2>⏱️ Module Overview</h2>
+            <p><strong>Estimated time:</strong> 15 minutes</p>
+            <p>In this module, you'll create a user interface to interact with your AI Agent. Choose between:</p>
+            <ul>
+                <li><strong>Snowflake Notebook:</strong> Interactive Python environment in Snowsight</li>
+                <li><strong>Streamlit App:</strong> Standalone web application</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2>Choose Your Interface</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('notebook')">📓 Option A: Snowflake Notebook</button>
+                <button class="tab" onclick="showTab('streamlit')">🎨 Option B: Streamlit App</button>
+            </div>
+            
+            <div id="notebook-content" class="tab-content active">
+                <h3>Option A: Snowflake Notebook</h3>
+                
+                <p>Snowflake Notebooks provide an interactive environment for data exploration and AI chat.</p>
+                
+                <h4>Step 1: Create a New Notebook</h4>
+                <ol>
+                    <li>In Snowsight, click <strong>Projects</strong> → <strong>Notebooks</strong></li>
+                    <li>Click <strong>+ Notebook</strong></li>
+                    <li>Name it <code>Workshop_AI_Assistant</code></li>
+                    <li>Select database <code>WORKSHOP_DB</code>, schema <code>AGENTS</code></li>
+                    <li>Select warehouse <code>WORKSHOP_WH</code></li>
+                </ol>
+                
+                <h4>Step 2: Add Setup Cell</h4>
+                <p>Add a Python cell with the setup code:</p>
+                
+                <pre><code><span class="comment"># Cell 1: Setup</span>
+<span class="keyword">import</span> streamlit <span class="keyword">as</span> st
+<span class="keyword">from</span> snowflake.snowpark.context <span class="keyword">import</span> get_active_session
+
+<span class="comment"># Get Snowflake session</span>
+session = get_active_session()
+
+<span class="comment"># Configuration</span>
+AGENT_NAME = <span class="string">"WORKSHOP_DB.AGENTS.WORKSHOP_AGENT"</span>
+
+<span class="keyword">def</span> <span class="function">ask_agent</span>(question: str) -> str:
+    <span class="string">"""Send a question to the Cortex Agent"""</span>
+    result = session.sql(<span class="string">f"""
+        SELECT SNOWFLAKE.CORTEX.AGENT(
+            '{AGENT_NAME}',
+            '{question.replace("'", "''")}'
+        ) AS RESPONSE
+    """</span>).collect()
+    <span class="keyword">return</span> result[0][<span class="string">'RESPONSE'</span>]
+
+st.title(<span class="string">"🤖 Workshop AI Assistant"</span>)
+st.markdown(<span class="string">"Ask questions about FOMC documents or revenue data"</span>)</code></pre>
+                
+                <h4>Step 3: Add Chat Interface Cell</h4>
+                <pre><code><span class="comment"># Cell 2: Chat Interface</span>
+
+<span class="comment"># Initialize chat history</span>
+<span class="keyword">if</span> <span class="string">"messages"</span> <span class="keyword">not in</span> st.session_state:
+    st.session_state.messages = []
+
+<span class="comment"># Display chat history</span>
+<span class="keyword">for</span> msg <span class="keyword">in</span> st.session_state.messages:
+    <span class="keyword">with</span> st.chat_message(msg[<span class="string">"role"</span>]):
+        st.write(msg[<span class="string">"content"</span>])
+
+<span class="comment"># Chat input</span>
+<span class="keyword">if</span> prompt := st.chat_input(<span class="string">"Ask a question..."</span>):
+    <span class="comment"># Display user message</span>
+    <span class="keyword">with</span> st.chat_message(<span class="string">"user"</span>):
+        st.write(prompt)
+    st.session_state.messages.append({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt})
+    
+    <span class="comment"># Get agent response</span>
+    <span class="keyword">with</span> st.chat_message(<span class="string">"assistant"</span>):
+        <span class="keyword">with</span> st.spinner(<span class="string">"Thinking..."</span>):
+            response = ask_agent(prompt)
+        st.write(response)
+    st.session_state.messages.append({<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: response})</code></pre>
+                
+                <h4>Step 4: Add Sample Questions Cell</h4>
+                <pre><code><span class="comment"># Cell 3: Sample Questions</span>
+
+st.markdown(<span class="string">"---"</span>)
+st.subheader(<span class="string">"💡 Sample Questions"</span>)
+
+col1, col2 = st.columns(2)
+
+<span class="keyword">with</span> col1:
+    st.markdown(<span class="string">"""
+    **📄 Document Questions:**
+    - What did the Fed say about inflation?
+    - How did the Fed view employment trends?
+    - What concerns were raised about banks?
+    """</span>)
+
+<span class="keyword">with</span> col2:
+    st.markdown(<span class="string">"""
+    **📊 Data Questions:**
+    - Show revenue by region last month
+    - Which product has highest profit margin?
+    - Compare Q3 vs Q4 revenue
+    """</span>)</code></pre>
+                
+                <h4>Step 5: Run the Notebook</h4>
+                <ol>
+                    <li>Click <strong>Run All</strong> to execute all cells</li>
+                    <li>The Streamlit interface will appear in the output</li>
+                    <li>Type questions in the chat input to interact with your agent!</li>
+                </ol>
+                
+                <div class="alert alert-success">
+                    <strong>✅ Notebook Complete!</strong> You now have an interactive chat interface in Snowsight.
+                </div>
+            </div>
+            
+            <div id="streamlit-content" class="tab-content">
+                <h3>Option B: Streamlit in Snowflake</h3>
+                
+                <p>Deploy a standalone Streamlit app in Snowflake with a polished UI.</p>
+                
+                <h4>Step 1: Create Streamlit App</h4>
+                <ol>
+                    <li>In Snowsight, click <strong>Projects</strong> → <strong>Streamlit</strong></li>
+                    <li>Click <strong>+ Streamlit App</strong></li>
+                    <li>Name it <code>Workshop_Chat_App</code></li>
+                    <li>Select database <code>WORKSHOP_DB</code>, schema <code>AGENTS</code></li>
+                    <li>Select warehouse <code>WORKSHOP_WH</code></li>
+                </ol>
+                
+                <h4>Step 2: Paste the App Code</h4>
+                <p>Replace the default code with:</p>
+                
+                <pre><code><span class="keyword">import</span> streamlit <span class="keyword">as</span> st
+<span class="keyword">from</span> snowflake.snowpark.context <span class="keyword">import</span> get_active_session
+
+<span class="comment"># Page config</span>
+st.set_page_config(
+    page_title=<span class="string">"AI Workshop Assistant"</span>,
+    page_icon=<span class="string">"🤖"</span>,
+    layout=<span class="string">"wide"</span>
+)
+
+<span class="comment"># Get session</span>
+session = get_active_session()
+
+<span class="comment"># Sidebar</span>
+<span class="keyword">with</span> st.sidebar:
+    st.image(<span class="string">"https://www.snowflake.com/wp-content/themes/snowflake/assets/img/logo-blue.svg"</span>, width=200)
+    st.title(<span class="string">"Workshop Settings"</span>)
+    
+    agent_type = st.radio(
+        <span class="string">"Select Agent:"</span>,
+        [<span class="string">"Cortex Agent"</span>, <span class="string">"Bedrock Agent"</span>],
+        index=0
+    )
+    
+    st.markdown(<span class="string">"---"</span>)
+    st.markdown(<span class="string">"""
+    ### About
+    This app demonstrates AI-powered 
+    data exploration using:
+    - **Cortex Search** for documents
+    - **Cortex Analyst** for data
+    - **AI Agents** for orchestration
+    """</span>)
+
+<span class="comment"># Main content</span>
+st.title(<span class="string">"🤖 Workshop AI Assistant"</span>)
+st.caption(<span class="string">"Ask questions about FOMC documents or revenue data"</span>)
+
+<span class="comment"># Agent function</span>
+<span class="keyword">def</span> <span class="function">query_agent</span>(question: str, use_cortex: bool = True) -> str:
+    <span class="keyword">if</span> use_cortex:
+        result = session.sql(<span class="string">f"""
+            SELECT SNOWFLAKE.CORTEX.AGENT(
+                'WORKSHOP_DB.AGENTS.WORKSHOP_AGENT',
+                $${question}$$
+            ) AS RESPONSE
+        """</span>).collect()
+        <span class="keyword">return</span> result[0][<span class="string">'RESPONSE'</span>]
+    <span class="keyword">else</span>:
+        <span class="comment"># Bedrock agent call</span>
+        result = session.sql(<span class="string">f"""
+            SELECT INVOKE_BEDROCK_AGENT($${question}$$) AS RESPONSE
+        """</span>).collect()
+        <span class="keyword">return</span> result[0][<span class="string">'RESPONSE'</span>][<span class="string">'response'</span>]
+
+<span class="comment"># Chat history</span>
+<span class="keyword">if</span> <span class="string">"messages"</span> <span class="keyword">not in</span> st.session_state:
+    st.session_state.messages = []
+
+<span class="comment"># Display messages</span>
+<span class="keyword">for</span> message <span class="keyword">in</span> st.session_state.messages:
+    <span class="keyword">with</span> st.chat_message(message[<span class="string">"role"</span>]):
+        st.markdown(message[<span class="string">"content"</span>])
+
+<span class="comment"># Chat input</span>
+<span class="keyword">if</span> prompt := st.chat_input(<span class="string">"What would you like to know?"</span>):
+    st.session_state.messages.append({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt})
+    
+    <span class="keyword">with</span> st.chat_message(<span class="string">"user"</span>):
+        st.markdown(prompt)
+    
+    <span class="keyword">with</span> st.chat_message(<span class="string">"assistant"</span>):
+        <span class="keyword">with</span> st.spinner(<span class="string">"Analyzing..."</span>):
+            use_cortex = agent_type == <span class="string">"Cortex Agent"</span>
+            response = query_agent(prompt, use_cortex)
+        st.markdown(response)
+    
+    st.session_state.messages.append({<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: response})
+
+<span class="comment"># Quick action buttons</span>
+st.markdown(<span class="string">"---"</span>)
+st.subheader(<span class="string">"Quick Questions"</span>)
+
+col1, col2, col3 = st.columns(3)
+
+<span class="keyword">with</span> col1:
+    <span class="keyword">if</span> st.button(<span class="string">"📈 Revenue Summary"</span>):
+        st.session_state.messages.append({
+            <span class="string">"role"</span>: <span class="string">"user"</span>,
+            <span class="string">"content"</span>: <span class="string">"Give me a summary of revenue trends"</span>
+        })
+        st.rerun()
+
+<span class="keyword">with</span> col2:
+    <span class="keyword">if</span> st.button(<span class="string">"🏛️ Fed Policy"</span>):
+        st.session_state.messages.append({
+            <span class="string">"role"</span>: <span class="string">"user"</span>,
+            <span class="string">"content"</span>: <span class="string">"What is the Fed's current stance on interest rates?"</span>
+        })
+        st.rerun()
+
+<span class="keyword">with</span> col3:
+    <span class="keyword">if</span> st.button(<span class="string">"🌍 Regional Sales"</span>):
+        st.session_state.messages.append({
+            <span class="string">"role"</span>: <span class="string">"user"</span>,
+            <span class="string">"content"</span>: <span class="string">"Compare revenue across regions"</span>
+        })
+        st.rerun()</code></pre>
+                
+                <h4>Step 3: Run the App</h4>
+                <ol>
+                    <li>Click <strong>Run</strong> in the top right</li>
+                    <li>The app will load in the preview pane</li>
+                    <li>Try toggling between Cortex and Bedrock agents in the sidebar</li>
+                    <li>Ask questions using the chat input or quick buttons!</li>
+                </ol>
+                
+                <div class="alert alert-success">
+                    <strong>✅ Streamlit App Complete!</strong> You now have a polished chat application.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Try These Questions!</h2>
+            
+            <p>Test your application with these questions:</p>
+            
+            <h3>📄 Document Questions (uses Cortex Search)</h3>
+            <ul>
+                <li>"What did the Federal Reserve discuss about inflation?"</li>
+                <li>"How does the Fed view the current labor market?"</li>
+                <li>"What risks did the Fed identify in recent meetings?"</li>
+            </ul>
+            
+            <h3>📊 Data Questions (uses Cortex Analyst)</h3>
+            <ul>
+                <li>"What was total revenue last month?"</li>
+                <li>"Show me profit by product line"</li>
+                <li>"Which region had the highest growth?"</li>
+                <li>"Compare forecasted vs actual revenue"</li>
+            </ul>
+            
+            <h3>🔗 Combined Questions</h3>
+            <ul>
+                <li>"Based on Fed policy, how might our revenue be affected?"</li>
+                <li>"Summarize both our financial performance and economic outlook"</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2>🎉 Module Complete!</h2>
+            
+            <p>You've successfully built an interactive AI application with:</p>
+            <ul>
+                <li>✅ Chat interface for natural language queries</li>
+                <li>✅ Integration with your AI Agent</li>
+                <li>✅ Support for both document and data questions</li>
+                <li>✅ (Optional) Toggle between Cortex and Bedrock agents</li>
+            </ul>
+            
+            <p>In the final module, we'll clean up the workshop resources.</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="05-agents.html" class="btn btn-secondary">← AI Agents</a>
+            <a href="07-cleanup.html" class="btn btn-primary">Next: Cleanup →</a>
+        </div>
+    </main>
+    
+    <footer>
+        <p>AWS + Snowflake GenAI Workshop</p>
+    </footer>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId + '-content').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

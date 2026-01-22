@@ -1,0 +1,60 @@
+# Sample Queries for AWS + Snowflake GenAI Workshop
+
+## FOMC Document Queries (Cortex Search)
+
+### Basic Questions
+- What did the Fed say about inflation?
+- What are the Fed's concerns about the labor market?
+- Summarize the key points from the January 2024 FOMC meeting
+- What economic indicators did the Fed discuss?
+
+### Policy Questions
+- What decisions were made about interest rates?
+- How does the Fed view current monetary policy?
+- What is the Fed's stance on quantitative tightening?
+- When might the Fed consider cutting rates?
+
+### Economic Outlook
+- What is the Fed's economic outlook?
+- How does the Fed view GDP growth?
+- What are the inflation expectations for the coming year?
+- How is the housing market affecting Fed policy?
+
+## Revenue Data Queries (Cortex Analyst)
+
+### Basic Metrics
+- What was total revenue last month?
+- Show total profit for the year
+- What are the cost of goods sold?
+- Calculate the overall profit margin
+
+### By Region
+- Show revenue breakdown by region
+- Which region has the highest profit?
+- Compare North America vs Europe revenue
+- What is the profit margin by region?
+
+### By Product
+- List revenue by product line
+- Which product has the highest sales?
+- Show profit by product category
+- What products are underperforming?
+
+### Trends
+- Show monthly revenue trend
+- How has profit margin changed over time?
+- Compare this quarter vs last quarter
+- What is the revenue forecast?
+
+### Complex Analysis
+- Which region-product combination has the highest margin?
+- Show year-over-year growth by region
+- Identify seasonal patterns in revenue
+- What percentage of revenue comes from each product?
+
+## Combined Queries (Agent Orchestration)
+
+- Given the Fed's economic outlook, how might our revenue be affected?
+- If interest rates rise, which regions might see reduced sales?
+- Based on inflation expectations, should we adjust pricing?
+- How do Fed policy changes correlate with our historical revenue?

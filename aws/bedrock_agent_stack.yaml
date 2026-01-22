@@ -1,0 +1,491 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS + Snowflake GenAI Workshop - Bedrock Agent Stack
+  Creates an Amazon Bedrock Agent that calls Snowflake Cortex functions via Lambda
+
+Parameters:
+  SnowflakeAccount:
+    Type: String
+    Description: Your Snowflake account identifier (e.g., xyz12345.us-west-2)
+    
+  SnowflakeUser:
+    Type: String
+    Default: WORKSHOP_USER
+    Description: Snowflake user for the Lambda function
+    
+  SnowflakePassword:
+    Type: String
+    NoEcho: true
+    Description: Password for the Snowflake user
+    
+  SnowflakeWarehouse:
+    Type: String
+    Default: WORKSHOP_WH
+    Description: Snowflake warehouse to use
+    
+  SnowflakeDatabase:
+    Type: String
+    Default: WORKSHOP_DB
+    Description: Snowflake database containing workshop objects
+    
+  LambdaLayerS3Bucket:
+    Type: String
+    Description: S3 bucket containing the Snowflake connector Lambda layer
+    
+  LambdaLayerS3Key:
+    Type: String
+    Default: snowflake_layer/snowflake_modules.zip
+    Description: S3 key for the Snowflake connector Lambda layer zip
+
+Resources:
+  # ============================================================================
+  # SECRETS
+  # ============================================================================
+  
+  SnowflakeCredentialsSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: workshop-snowflake-credentials
+      Description: Snowflake credentials for Bedrock Agent Lambda
+      SecretString: !Sub |
+        {
+          "account": "${SnowflakeAccount}",
+          "user": "${SnowflakeUser}",
+          "password": "${SnowflakePassword}",
+          "warehouse": "${SnowflakeWarehouse}",
+          "database": "${SnowflakeDatabase}"
+        }
+
+  # ============================================================================
+  # LAMBDA LAYER (Snowflake Connector)
+  # ============================================================================
+  
+  SnowflakeConnectorLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: snowflake-connector-layer
+      Description: Snowflake Python connector for Lambda
+      Content:
+        S3Bucket: !Ref LambdaLayerS3Bucket
+        S3Key: !Ref LambdaLayerS3Key
+      CompatibleRuntimes:
+        - python3.11
+        - python3.10
+
+  # ============================================================================
+  # LAMBDA FUNCTION - Cortex Search Tool
+  # ============================================================================
+  
+  CortexSearchLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: workshop-cortex-search-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref SnowflakeCredentialsSecret
+
+  CortexSearchLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: workshop-cortex-search
+      Description: Lambda function to search FOMC documents via Snowflake Cortex Search
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Timeout: 60
+      MemorySize: 512
+      Role: !GetAtt CortexSearchLambdaRole.Arn
+      Layers:
+        - !Ref SnowflakeConnectorLayer
+      Environment:
+        Variables:
+          SNOWFLAKE_SECRET_ARN: !Ref SnowflakeCredentialsSecret
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+          import snowflake.connector
+          
+          def get_snowflake_credentials():
+              secret_arn = os.environ['SNOWFLAKE_SECRET_ARN']
+              client = boto3.client('secretsmanager')
+              response = client.get_secret_value(SecretId=secret_arn)
+              return json.loads(response['SecretString'])
+          
+          def lambda_handler(event, context):
+              print(f"Event: {json.dumps(event)}")
+              
+              # Extract query from Bedrock Agent request
+              parameters = event.get('parameters', [])
+              query = None
+              for param in parameters:
+                  if param.get('name') == 'query':
+                      query = param.get('value')
+                      break
+              
+              if not query:
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({'error': 'Missing query parameter'})
+                  }
+              
+              # Connect to Snowflake
+              creds = get_snowflake_credentials()
+              conn = snowflake.connector.connect(
+                  account=creds['account'],
+                  user=creds['user'],
+                  password=creds['password'],
+                  warehouse=creds['warehouse'],
+                  database=creds['database'],
+                  schema='PUBLIC'
+              )
+              
+              try:
+                  cursor = conn.cursor()
+                  
+                  # Call the search function
+                  sql = f"""
+                  SELECT * FROM TABLE(SEARCH_FOMC_DOCS('{query.replace("'", "''")}', 5))
+                  """
+                  cursor.execute(sql)
+                  results = cursor.fetchall()
+                  
+                  # Format results
+                  formatted_results = []
+                  for row in results:
+                      formatted_results.append({
+                          'chunk': row[0],
+                          'file_name': row[1],
+                          'meeting_date': str(row[2]) if row[2] else None,
+                          'relevance_score': row[3]
+                      })
+                  
+                  response_body = {
+                      'query': query,
+                      'results': formatted_results,
+                      'count': len(formatted_results)
+                  }
+                  
+                  return {
+                      'messageVersion': '1.0',
+                      'response': {
+                          'actionGroup': event.get('actionGroup'),
+                          'function': event.get('function'),
+                          'functionResponse': {
+                              'responseBody': {
+                                  'TEXT': {
+                                      'body': json.dumps(response_body)
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  
+              finally:
+                  conn.close()
+
+  # ============================================================================
+  # LAMBDA FUNCTION - Cortex Analyst Tool  
+  # ============================================================================
+  
+  CortexAnalystLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: workshop-cortex-analyst-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref SnowflakeCredentialsSecret
+
+  CortexAnalystLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: workshop-cortex-analyst
+      Description: Lambda function to query revenue data via Snowflake Cortex Analyst
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Timeout: 120
+      MemorySize: 512
+      Role: !GetAtt CortexAnalystLambdaRole.Arn
+      Layers:
+        - !Ref SnowflakeConnectorLayer
+      Environment:
+        Variables:
+          SNOWFLAKE_SECRET_ARN: !Ref SnowflakeCredentialsSecret
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+          import snowflake.connector
+          import requests
+          
+          def get_snowflake_credentials():
+              secret_arn = os.environ['SNOWFLAKE_SECRET_ARN']
+              client = boto3.client('secretsmanager')
+              response = client.get_secret_value(SecretId=secret_arn)
+              return json.loads(response['SecretString'])
+          
+          def lambda_handler(event, context):
+              print(f"Event: {json.dumps(event)}")
+              
+              # Extract question from Bedrock Agent request
+              parameters = event.get('parameters', [])
+              question = None
+              for param in parameters:
+                  if param.get('name') == 'question':
+                      question = param.get('value')
+                      break
+              
+              if not question:
+                  return {
+                      'statusCode': 400,
+                      'body': json.dumps({'error': 'Missing question parameter'})
+                  }
+              
+              # Connect to Snowflake
+              creds = get_snowflake_credentials()
+              conn = snowflake.connector.connect(
+                  account=creds['account'],
+                  user=creds['user'],
+                  password=creds['password'],
+                  warehouse=creds['warehouse'],
+                  database=creds['database'],
+                  schema='REVENUE_TIMESERIES'
+              )
+              
+              try:
+                  # Get REST API token
+                  host = f"{creds['account']}.snowflakecomputing.com"
+                  token = conn.rest.token
+                  
+                  # Call Cortex Analyst API
+                  response = requests.post(
+                      f"https://{host}/api/v2/cortex/analyst/message",
+                      headers={
+                          'Authorization': f'Snowflake Token="{token}"',
+                          'Content-Type': 'application/json'
+                      },
+                      json={
+                          'messages': [
+                              {
+                                  'role': 'user',
+                                  'content': [{'type': 'text', 'text': question}]
+                              }
+                          ],
+                          'semantic_view': 'WORKSHOP_DB.REVENUE_TIMESERIES.REVENUE_SEMANTIC_VIEW'
+                      }
+                  )
+                  
+                  analyst_response = response.json()
+                  
+                  # Extract the answer
+                  answer_text = ""
+                  sql_query = ""
+                  
+                  if 'message' in analyst_response:
+                      for item in analyst_response['message'].get('content', []):
+                          if item.get('type') == 'text':
+                              answer_text += item.get('text', '')
+                          elif item.get('type') == 'sql':
+                              sql_query = item.get('statement', '')
+                  
+                  response_body = {
+                      'question': question,
+                      'answer': answer_text,
+                      'sql_query': sql_query
+                  }
+                  
+                  return {
+                      'messageVersion': '1.0',
+                      'response': {
+                          'actionGroup': event.get('actionGroup'),
+                          'function': event.get('function'),
+                          'functionResponse': {
+                              'responseBody': {
+                                  'TEXT': {
+                                      'body': json.dumps(response_body)
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  
+              finally:
+                  conn.close()
+
+  # ============================================================================
+  # BEDROCK AGENT
+  # ============================================================================
+  
+  BedrockAgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: workshop-bedrock-agent-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BedrockAgentPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt CortexSearchLambda.Arn
+                  - !GetAtt CortexAnalystLambda.Arn
+
+  BedrockAgent:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: workshop-snowflake-agent
+      Description: Workshop agent that combines FOMC document search and revenue analytics via Snowflake Cortex
+      AgentResourceRoleArn: !GetAtt BedrockAgentRole.Arn
+      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+      Instruction: |
+        You are a helpful assistant that can answer questions about Federal Reserve (FOMC) meeting minutes and company revenue data.
+        
+        Use the search_fomc_documents function for questions about:
+        - Federal Reserve meetings
+        - Interest rate decisions
+        - Inflation expectations
+        - Economic outlook
+        - Monetary policy
+        
+        Use the query_revenue_data function for questions about:
+        - Company revenue
+        - Sales by product or region
+        - Profit margins
+        - Financial forecasts
+        - Revenue trends
+        
+        When answering:
+        - Be concise and clear
+        - Cite FOMC meeting dates when referencing Fed documents
+        - Explain any data or calculations for revenue questions
+      IdleSessionTTLInSeconds: 600
+
+  BedrockAgentActionGroup:
+    Type: AWS::Bedrock::AgentActionGroup
+    Properties:
+      AgentId: !Ref BedrockAgent
+      AgentVersion: DRAFT
+      ActionGroupName: snowflake-cortex-tools
+      Description: Tools for searching FOMC documents and querying revenue data
+      ActionGroupExecutor:
+        CustomControl: RETURN_CONTROL
+      FunctionSchema:
+        Functions:
+          - Name: search_fomc_documents
+            Description: Search FOMC (Federal Open Market Committee) meeting minutes for information about Federal Reserve decisions, interest rates, inflation expectations, economic outlook, and monetary policy.
+            Parameters:
+              query:
+                Type: string
+                Description: The search query to find relevant FOMC meeting content
+                Required: true
+          - Name: query_revenue_data
+            Description: Query company revenue data using natural language. Can answer questions about total revenue, revenue by product line, revenue by region, profit margins, forecasts, and trends over time.
+            Parameters:
+              question:
+                Type: string
+                Description: The natural language question about revenue data
+                Required: true
+
+  # Lambda permissions for Bedrock Agent
+  CortexSearchLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CortexSearchLambda
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !GetAtt BedrockAgent.AgentArn
+
+  CortexAnalystLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CortexAnalystLambda
+      Action: lambda:InvokeFunction
+      Principal: bedrock.amazonaws.com
+      SourceArn: !GetAtt BedrockAgent.AgentArn
+
+  # ============================================================================
+  # AGENT ALIAS (for invocation)
+  # ============================================================================
+  
+  BedrockAgentAlias:
+    Type: AWS::Bedrock::AgentAlias
+    DependsOn: BedrockAgentActionGroup
+    Properties:
+      AgentId: !Ref BedrockAgent
+      AgentAliasName: workshop-alias
+      Description: Production alias for workshop agent
+
+Outputs:
+  AgentId:
+    Description: Bedrock Agent ID
+    Value: !Ref BedrockAgent
+    Export:
+      Name: WorkshopBedrockAgentId
+      
+  AgentAliasId:
+    Description: Bedrock Agent Alias ID
+    Value: !GetAtt BedrockAgentAlias.AgentAliasId
+    Export:
+      Name: WorkshopBedrockAgentAliasId
+      
+  AgentArn:
+    Description: Bedrock Agent ARN
+    Value: !GetAtt BedrockAgent.AgentArn
+    Export:
+      Name: WorkshopBedrockAgentArn
+      
+  Region:
+    Description: AWS Region
+    Value: !Ref AWS::Region
+    
+  CortexSearchLambdaArn:
+    Description: Cortex Search Lambda ARN
+    Value: !GetAtt CortexSearchLambda.Arn
+    
+  CortexAnalystLambdaArn:
+    Description: Cortex Analyst Lambda ARN
+    Value: !GetAtt CortexAnalystLambda.Arn

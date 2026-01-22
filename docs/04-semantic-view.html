@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic View - AWS + Snowflake GenAI Workshop</title>
+    <style>
+        :root { --aws-orange: #FF9900; --snowflake-blue: #29B5E8; --dark-bg: #232F3E; --light-bg: #f5f7fa; --text-color: #333; --border-color: #ddd; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-color); background: var(--light-bg); }
+        header { background: linear-gradient(135deg, var(--dark-bg) 0%, #37475A 100%); color: white; padding: 1.5rem 2rem; }
+        header h1 { font-size: 1.8rem; }
+        nav { background: white; border-bottom: 1px solid var(--border-color); padding: 1rem; position: sticky; top: 0; z-index: 100; }
+        nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        nav a { text-decoration: none; color: var(--text-color); padding: 0.5rem 1rem; border-radius: 5px; }
+        nav a:hover, nav a.active { background: var(--snowflake-blue); color: white; }
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
+        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
+        .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
+        .alert-warning { background: #fff3e0; border-left: 4px solid var(--aws-orange); }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #28a745; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; margin: 0.5rem 0.5rem 0.5rem 0; }
+        .btn-primary { background: var(--snowflake-blue); color: white; }
+        .btn-secondary { background: var(--aws-orange); color: white; }
+        code { background: #f1f3f5; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: var(--dark-bg); color: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; }
+        pre code { background: none; padding: 0; color: inherit; }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; }
+        li { margin: 0.5rem 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--light-bg); }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📊 Module 4: Semantic View</h1>
+        <p>Enable natural language queries on structured data</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="00-prerequisites.html">Prerequisites</a></li>
+            <li><a href="01-overview.html">Overview</a></li>
+            <li><a href="02-snowflake-setup.html">Snowflake Setup</a></li>
+            <li><a href="03-document-ai.html">Document AI</a></li>
+            <li><a href="04-semantic-view.html" class="active">Semantic View</a></li>
+            <li><a href="05-agents.html">AI Agents</a></li>
+            <li><a href="06-application.html">Application</a></li>
+            <li><a href="07-cleanup.html">Cleanup</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <div class="card">
+            <h2>⏱️ Module Overview</h2>
+            <p><strong>Estimated time:</strong> 15 minutes</p>
+            <p>In this module, you'll create a <strong>Semantic View</strong> that enables Cortex Analyst to understand your data in business terms.</p>
+            
+            <div class="alert alert-info">
+                <strong>💡 What is a Semantic View?</strong> A Semantic View is like a dictionary for your data. 
+                It tells AI what "revenue," "profit," and "region" mean in your context, enabling accurate 
+                natural language to SQL translation.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Understanding the Data</h2>
+            
+            <p>First, let's understand the revenue data we loaded earlier:</p>
+            
+            <table>
+                <tr>
+                    <th>Table</th>
+                    <th>Description</th>
+                    <th>Key Columns</th>
+                </tr>
+                <tr>
+                    <td><code>DAILY_REVENUE</code></td>
+                    <td>Overall daily revenue metrics</td>
+                    <td>DATE, REVENUE, COGS, FORECASTED_REVENUE</td>
+                </tr>
+                <tr>
+                    <td><code>DAILY_REVENUE_BY_PRODUCT</code></td>
+                    <td>Revenue broken down by product line</td>
+                    <td>DATE, PRODUCT_LINE, REVENUE, COGS</td>
+                </tr>
+                <tr>
+                    <td><code>DAILY_REVENUE_BY_REGION</code></td>
+                    <td>Revenue broken down by sales region</td>
+                    <td>DATE, SALES_REGION, REVENUE, COGS</td>
+                </tr>
+            </table>
+            
+            <pre><code><span class="comment">-- Preview the data</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE <span class="keyword">LIMIT</span> 5;
+<span class="keyword">SELECT DISTINCT</span> PRODUCT_LINE <span class="keyword">FROM</span> WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE_BY_PRODUCT;
+<span class="keyword">SELECT DISTINCT</span> SALES_REGION <span class="keyword">FROM</span> WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE_BY_REGION;</code></pre>
+        </div>
+        
+        <div class="card">
+            <h2>Step 1: Create the Semantic View</h2>
+            
+            <p>The Semantic View defines your data model in YAML format, describing tables, dimensions, measures, and relationships.</p>
+            
+            <pre><code><span class="keyword">USE DATABASE</span> WORKSHOP_DB;
+<span class="keyword">USE SCHEMA</span> REVENUE_TIMESERIES;
+<span class="keyword">USE WAREHOUSE</span> WORKSHOP_WH;
+
+<span class="keyword">CREATE OR REPLACE SEMANTIC VIEW</span> REVENUE_SEMANTIC_VIEW
+  COMMENT = <span class="string">'Revenue analytics semantic model for Cortex Analyst'</span>
+<span class="keyword">AS</span> 
+$$
+name: Revenue Analytics
+description: >
+  Semantic model for analyzing company revenue data across time, 
+  products, and regions. Use this to answer questions about revenue 
+  trends, profitability, and forecasts.
+
+tables:
+  - name: daily_revenue
+    description: Daily aggregate revenue metrics for the entire company
+    base_table:
+      database: WORKSHOP_DB
+      schema: REVENUE_TIMESERIES
+      table: DAILY_REVENUE
+    dimensions:
+      - name: date
+        description: The calendar date of the revenue record
+        expr: DATE
+        data_type: DATE
+    time_dimensions:
+      - name: date
+        description: Date dimension for time-based analysis
+        expr: DATE
+        data_type: DATE
+    measures:
+      - name: revenue
+        description: Total revenue in USD for the day
+        expr: REVENUE
+        data_type: FLOAT
+        default_aggregation: SUM
+      - name: cogs
+        description: Cost of goods sold in USD
+        expr: COGS
+        data_type: FLOAT
+        default_aggregation: SUM
+      - name: profit
+        description: Gross profit (Revenue minus COGS)
+        expr: REVENUE - COGS
+        data_type: FLOAT
+        default_aggregation: SUM
+      - name: profit_margin
+        description: Profit margin as a percentage
+        expr: (REVENUE - COGS) / NULLIF(REVENUE, 0) * 100
+        data_type: FLOAT
+        default_aggregation: AVG
+      - name: forecasted_revenue
+        description: Predicted revenue from forecasting model
+        expr: FORECASTED_REVENUE
+        data_type: FLOAT
+        default_aggregation: SUM
+
+  - name: daily_revenue_by_product
+    description: Daily revenue broken down by product line
+    base_table:
+      database: WORKSHOP_DB
+      schema: REVENUE_TIMESERIES
+      table: DAILY_REVENUE_BY_PRODUCT
+    dimensions:
+      - name: date
+        description: The calendar date
+        expr: DATE
+        data_type: DATE
+      - name: product_line
+        description: The product category or line of business
+        expr: PRODUCT_LINE
+        data_type: VARCHAR
+        sample_values:
+          - "Electronics"
+          - "Clothing"
+          - "Home & Garden"
+    time_dimensions:
+      - name: date
+        expr: DATE
+        data_type: DATE
+    measures:
+      - name: revenue
+        description: Revenue for the product line
+        expr: REVENUE
+        data_type: FLOAT
+        default_aggregation: SUM
+      - name: profit
+        description: Profit for the product line
+        expr: REVENUE - COGS
+        data_type: FLOAT
+        default_aggregation: SUM
+
+  - name: daily_revenue_by_region
+    description: Daily revenue broken down by sales region
+    base_table:
+      database: WORKSHOP_DB
+      schema: REVENUE_TIMESERIES
+      table: DAILY_REVENUE_BY_REGION
+    dimensions:
+      - name: date
+        description: The calendar date
+        expr: DATE
+        data_type: DATE
+      - name: sales_region
+        description: Geographic sales region
+        expr: SALES_REGION
+        data_type: VARCHAR
+        sample_values:
+          - "North America"
+          - "Europe"
+          - "Asia Pacific"
+    time_dimensions:
+      - name: date
+        expr: DATE
+        data_type: DATE
+    measures:
+      - name: revenue
+        description: Revenue for the region
+        expr: REVENUE
+        data_type: FLOAT
+        default_aggregation: SUM
+      - name: profit
+        description: Profit for the region
+        expr: REVENUE - COGS
+        data_type: FLOAT
+        default_aggregation: SUM
+
+verified_queries:
+  - name: total_revenue_last_month
+    question: What was the total revenue last month?
+    sql: |
+      SELECT SUM(revenue) as total_revenue
+      FROM WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE
+      WHERE DATE >= DATEADD(month, -1, CURRENT_DATE())
+      
+  - name: revenue_by_region
+    question: Show revenue breakdown by region
+    sql: |
+      SELECT sales_region, SUM(revenue) as total_revenue
+      FROM WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE_BY_REGION
+      GROUP BY sales_region
+      ORDER BY total_revenue DESC
+$$;</code></pre>
+        </div>
+        
+        <div class="card">
+            <h2>Step 2: Understanding the Semantic View Structure</h2>
+            
+            <h3>Key Components</h3>
+            
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Purpose</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td><strong>name/description</strong></td>
+                    <td>Human-readable context for the AI</td>
+                    <td>"Revenue Analytics"</td>
+                </tr>
+                <tr>
+                    <td><strong>tables</strong></td>
+                    <td>Map to physical database tables</td>
+                    <td><code>DAILY_REVENUE</code></td>
+                </tr>
+                <tr>
+                    <td><strong>dimensions</strong></td>
+                    <td>Columns you group/filter by</td>
+                    <td>product_line, sales_region</td>
+                </tr>
+                <tr>
+                    <td><strong>time_dimensions</strong></td>
+                    <td>Date/time columns for trends</td>
+                    <td>date</td>
+                </tr>
+                <tr>
+                    <td><strong>measures</strong></td>
+                    <td>Numeric values to aggregate</td>
+                    <td>revenue, profit</td>
+                </tr>
+                <tr>
+                    <td><strong>verified_queries</strong></td>
+                    <td>Pre-validated question/SQL pairs</td>
+                    <td>Helps AI learn your patterns</td>
+                </tr>
+            </table>
+            
+            <div class="alert alert-info">
+                <strong>💡 Why Descriptions Matter:</strong> The more descriptive your definitions, the better 
+                Cortex Analyst understands your data. "Revenue in USD for the day" is better than just "Revenue."
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Step 3: Verify the Semantic View</h2>
+            
+            <pre><code><span class="comment">-- Check that the semantic view was created</span>
+<span class="keyword">SHOW SEMANTIC VIEWS IN SCHEMA</span> WORKSHOP_DB.REVENUE_TIMESERIES;
+
+<span class="comment">-- Describe the semantic view</span>
+<span class="keyword">DESCRIBE SEMANTIC VIEW</span> REVENUE_SEMANTIC_VIEW;
+
+<span class="comment">-- Grant access (if needed for other roles)</span>
+<span class="keyword">GRANT SELECT ON SEMANTIC VIEW</span> REVENUE_SEMANTIC_VIEW <span class="keyword">TO ROLE</span> ACCOUNTADMIN;</code></pre>
+        </div>
+        
+        <div class="card">
+            <h2>Step 4: Test Cortex Analyst</h2>
+            
+            <p>While the full Cortex Analyst experience is through the REST API (which we'll use in the Agent module), 
+            we can verify our data is ready with some sample queries:</p>
+            
+            <pre><code><span class="comment">-- These are the kinds of questions Cortex Analyst will answer:</span>
+
+<span class="comment">-- "What was total revenue last month?"</span>
+<span class="keyword">SELECT SUM</span>(REVENUE) <span class="keyword">AS</span> TOTAL_REVENUE
+<span class="keyword">FROM</span> DAILY_REVENUE
+<span class="keyword">WHERE</span> DATE >= <span class="function">DATEADD</span>(month, -1, <span class="function">CURRENT_DATE</span>());
+
+<span class="comment">-- "Show profit by region"</span>
+<span class="keyword">SELECT</span> 
+    SALES_REGION,
+    <span class="keyword">SUM</span>(REVENUE) <span class="keyword">AS</span> REVENUE,
+    <span class="keyword">SUM</span>(REVENUE - COGS) <span class="keyword">AS</span> PROFIT
+<span class="keyword">FROM</span> DAILY_REVENUE_BY_REGION
+<span class="keyword">GROUP BY</span> SALES_REGION
+<span class="keyword">ORDER BY</span> PROFIT <span class="keyword">DESC</span>;
+
+<span class="comment">-- "What are the top products by revenue?"</span>
+<span class="keyword">SELECT</span> 
+    PRODUCT_LINE,
+    <span class="keyword">SUM</span>(REVENUE) <span class="keyword">AS</span> TOTAL_REVENUE
+<span class="keyword">FROM</span> DAILY_REVENUE_BY_PRODUCT
+<span class="keyword">GROUP BY</span> PRODUCT_LINE
+<span class="keyword">ORDER BY</span> TOTAL_REVENUE <span class="keyword">DESC</span>
+<span class="keyword">LIMIT</span> 10;</code></pre>
+            
+            <div class="alert alert-success">
+                <strong>✅ How It Works:</strong> When you ask Cortex Analyst "What was profit by region?", 
+                it reads the Semantic View, understands that "profit" = REVENUE - COGS and "region" = SALES_REGION, 
+                then generates and runs the appropriate SQL.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🎉 Module Complete!</h2>
+            
+            <p>You've successfully created a Semantic View with:</p>
+            <ul>
+                <li>✅ Three tables mapped (daily_revenue, by_product, by_region)</li>
+                <li>✅ Dimensions defined (date, product_line, sales_region)</li>
+                <li>✅ Measures with aggregations (revenue, profit, profit_margin)</li>
+                <li>✅ Verified queries for common questions</li>
+            </ul>
+            
+            <p>In the next module, we'll create an AI Agent that combines Cortex Search (documents) and 
+            Cortex Analyst (this Semantic View) to answer any question!</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="03-document-ai.html" class="btn btn-secondary">← Document AI</a>
+            <a href="05-agents.html" class="btn btn-primary">Next: AI Agents →</a>
+        </div>
+    </main>
+    
+    <footer>
+        <p>AWS + Snowflake GenAI Workshop</p>
+    </footer>
+</body>
+</html>

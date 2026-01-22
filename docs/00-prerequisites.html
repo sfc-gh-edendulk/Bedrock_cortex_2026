@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prerequisites - AWS + Snowflake GenAI Workshop</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --aws-orange: #FF9900;
+            --snowflake-blue: #29B5E8;
+            --dark-bg: #232F3E;
+            --light-bg: #f5f7fa;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-color); background: var(--light-bg); }
+        header { background: linear-gradient(135deg, var(--dark-bg) 0%, #37475A 100%); color: white; padding: 1.5rem 2rem; }
+        header h1 { font-size: 1.8rem; }
+        nav { background: white; border-bottom: 1px solid var(--border-color); padding: 1rem; position: sticky; top: 0; z-index: 100; }
+        nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        nav a { text-decoration: none; color: var(--text-color); padding: 0.5rem 1rem; border-radius: 5px; transition: background 0.2s; }
+        nav a:hover, nav a.active { background: var(--snowflake-blue); color: white; }
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
+        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
+        .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
+        .alert-warning { background: #fff3e0; border-left: 4px solid var(--aws-orange); }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #28a745; }
+        .alert-danger { background: #ffebee; border-left: 4px solid #dc3545; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; transition: transform 0.2s; margin: 0.5rem 0.5rem 0.5rem 0; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: var(--snowflake-blue); color: white; }
+        .btn-secondary { background: var(--aws-orange); color: white; }
+        .btn-large { padding: 1rem 2rem; font-size: 1.1rem; }
+        code { background: #f1f3f5; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: var(--dark-bg); color: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+        pre code { background: none; padding: 0; color: inherit; }
+        ol, ul { margin: 1rem 0 1rem 1.5rem; }
+        li { margin: 0.5rem 0; }
+        .step-number { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background: var(--snowflake-blue); color: white; border-radius: 50%; font-weight: bold; margin-right: 0.5rem; }
+        .step { display: flex; align-items: flex-start; margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+        .step-content { flex: 1; }
+        .step-content h4 { margin: 0 0 0.5rem 0; }
+        img { max-width: 100%; border-radius: 8px; margin: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
+        footer a { color: var(--snowflake-blue); }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📋 Module 0: Prerequisites</h1>
+        <p>Set up your accounts before the workshop</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="00-prerequisites.html" class="active">Prerequisites</a></li>
+            <li><a href="01-overview.html">Overview</a></li>
+            <li><a href="02-snowflake-setup.html">Snowflake Setup</a></li>
+            <li><a href="03-document-ai.html">Document AI</a></li>
+            <li><a href="04-semantic-view.html">Semantic View</a></li>
+            <li><a href="05-agents.html">AI Agents</a></li>
+            <li><a href="06-application.html">Application</a></li>
+            <li><a href="07-cleanup.html">Cleanup</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <div class="card">
+            <h2>⏱️ Before You Begin</h2>
+            <p><strong>Estimated time:</strong> 10 minutes</p>
+            
+            <div class="alert alert-danger">
+                <strong>🚨 IMPORTANT:</strong> Complete these steps <strong>before</strong> the workshop begins. 
+                You will not have time to do this during the session!
+            </div>
+            
+            <h3>What You'll Need</h3>
+            <ul>
+                <li>A web browser (Chrome, Firefox, or Edge recommended)</li>
+                <li>An email address for creating accounts</li>
+                <li>Access to the AWS Workshop Studio environment (provided by instructors)</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2>Step 1: Create a Snowflake Trial Account</h2>
+            
+            <p>Snowflake offers a free 30-day trial with $400 in credits. This is more than enough for our workshop.</p>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h4>Go to the Snowflake Trial Page</h4>
+                    <p>Click the button below to open the Snowflake trial signup page in a new tab:</p>
+                    <a href="https://signup.snowflake.com/" target="_blank" class="btn btn-primary btn-large">
+                        Create Snowflake Trial Account →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h4>Fill Out the Signup Form</h4>
+                    <p>Enter your details:</p>
+                    <ul>
+                        <li><strong>First Name & Last Name:</strong> Your real name</li>
+                        <li><strong>Email:</strong> Use a valid email you can access</li>
+                        <li><strong>Company:</strong> Your company or "Personal"</li>
+                        <li><strong>Country:</strong> Select your country</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <h4>Choose Your Cloud Provider and Region</h4>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ CRITICAL:</strong> Select these exact options for best compatibility with AWS Bedrock:
+                    </div>
+                    <ul>
+                        <li><strong>Cloud Provider:</strong> Amazon Web Services (AWS)</li>
+                        <li><strong>Region:</strong> US West (Oregon) - <code>us-west-2</code></li>
+                        <li><strong>Snowflake Edition:</strong> Enterprise (default for trial)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-content">
+                    <h4>Complete Registration</h4>
+                    <ul>
+                        <li>Check your email for a verification link</li>
+                        <li>Click the link to activate your account</li>
+                        <li>Set a secure password when prompted</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5</span>
+                <div class="step-content">
+                    <h4>Log In to Snowsight</h4>
+                    <p>After activation, you'll be redirected to Snowsight (Snowflake's web interface). 
+                    Bookmark this URL—you'll need it throughout the workshop!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Step 2: Find Your Snowflake Account Identifier</h2>
+            
+            <p>You need to provide your Snowflake account identifier so workshop data can be shared with you.</p>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h4>Open Account Menu</h4>
+                    <p>In Snowsight, click on your account name in the bottom-left corner of the screen.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h4>Copy Your Account Identifier</h4>
+                    <p>Look for your <strong>Account Identifier</strong>. It will look something like:</p>
+                    <pre><code>XXXXXXX-YY12345</code></pre>
+                    <p>Or for some accounts:</p>
+                    <pre><code>xy12345.us-west-2.aws</code></pre>
+                    <p>Click the copy icon next to it or manually select and copy the text.</p>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>💡 Alternative Method:</strong> You can also find your account identifier by running this SQL in a worksheet:
+                <pre><code>SELECT CURRENT_ACCOUNT();</code></pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Step 3: Register for the Workshop</h2>
+            
+            <p>Submit your Snowflake account identifier so we can share workshop data with your account.</p>
+            
+            <div class="alert alert-success">
+                <strong>✅ What This Does:</strong> Registering allows us to share the sample data (FOMC documents, 
+                revenue data) directly to your Snowflake account, saving setup time.
+            </div>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+                <a href="https://forms.gle/GGqFBZShEGeJHmTAA" target="_blank" class="btn btn-secondary btn-large">
+                    📝 Submit Registration Form →
+                </a>
+            </div>
+            
+            <p><strong>In the form, you'll provide:</strong></p>
+            <ul>
+                <li>Your name</li>
+                <li>Your email address</li>
+                <li>Your Snowflake account identifier (from Step 2)</li>
+            </ul>
+        </div>
+        
+        <div class="card">
+            <h2>Step 4: AWS Workshop Studio Access</h2>
+            
+            <p>Your AWS environment will be provided by the workshop organizers through AWS Workshop Studio.</p>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h4>Join Workshop Studio</h4>
+                    <p>You will receive an event code from your instructor. Go to:</p>
+                    <a href="https://catalog.us-east-1.prod.workshops.aws/join" target="_blank" class="btn btn-secondary">
+                        Join Workshop Studio →
+                    </a>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h4>Sign In with Email OTP</h4>
+                    <ul>
+                        <li>Select "Email One-Time Password (OTP)"</li>
+                        <li>Enter your email address</li>
+                        <li>Check your email for the 9-digit passcode</li>
+                        <li>Enter the passcode to sign in</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <h4>Enter Event Access Code</h4>
+                    <p>If prompted, enter the event access code provided by your instructor.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-content">
+                    <h4>Access AWS Console</h4>
+                    <p>After joining, click <strong>"Open AWS Console"</strong> to access your temporary AWS account.</p>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>⚠️ Important:</strong> Use region <code>us-west-2</code> (Oregon) for all AWS services in this workshop.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>✅ Prerequisites Checklist</h2>
+            
+            <p>Before proceeding, confirm you have completed:</p>
+            
+            <ul style="list-style-type: none; padding: 0;">
+                <li>☐ Created a Snowflake trial account</li>
+                <li>☐ Selected AWS as cloud provider with us-west-2 region</li>
+                <li>☐ Found your Snowflake account identifier</li>
+                <li>☐ Submitted the registration form</li>
+                <li>☐ Received AWS Workshop Studio access (or will receive at workshop start)</li>
+            </ul>
+            
+            <div class="alert alert-success">
+                <strong>🎉 All Done?</strong> Great! You're ready for the workshop. Proceed to the Overview module 
+                to learn about the technologies we'll be using.
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="btn btn-secondary">← Back to Home</a>
+            <a href="01-overview.html" class="btn btn-primary">Next: Overview →</a>
+        </div>
+    </main>
+    
+    <footer>
+        <p>AWS + Snowflake GenAI Workshop</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+            Need help? Ask your workshop instructor.
+        </p>
+    </footer>
+</body>
+</html>

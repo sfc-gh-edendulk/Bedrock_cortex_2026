@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleanup - AWS + Snowflake GenAI Workshop</title>
+    <style>
+        :root { --aws-orange: #FF9900; --snowflake-blue: #29B5E8; --dark-bg: #232F3E; --light-bg: #f5f7fa; --text-color: #333; --border-color: #ddd; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: var(--text-color); background: var(--light-bg); }
+        header { background: linear-gradient(135deg, var(--dark-bg) 0%, #37475A 100%); color: white; padding: 1.5rem 2rem; }
+        header h1 { font-size: 1.8rem; }
+        nav { background: white; border-bottom: 1px solid var(--border-color); padding: 1rem; position: sticky; top: 0; z-index: 100; }
+        nav ul { list-style: none; display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        nav a { text-decoration: none; color: var(--text-color); padding: 0.5rem 1rem; border-radius: 5px; }
+        nav a:hover, nav a.active { background: var(--snowflake-blue); color: white; }
+        main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 2rem; margin-bottom: 2rem; }
+        h2 { color: var(--dark-bg); border-bottom: 3px solid var(--snowflake-blue); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h3 { color: var(--dark-bg); margin: 1.5rem 0 1rem; }
+        .alert { padding: 1rem 1.5rem; border-radius: 8px; margin: 1rem 0; }
+        .alert-info { background: #e3f2fd; border-left: 4px solid var(--snowflake-blue); }
+        .alert-warning { background: #fff3e0; border-left: 4px solid var(--aws-orange); }
+        .alert-success { background: #e8f5e9; border-left: 4px solid #28a745; }
+        .alert-danger { background: #ffebee; border-left: 4px solid #dc3545; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; margin: 0.5rem 0.5rem 0.5rem 0; }
+        .btn-primary { background: var(--snowflake-blue); color: white; }
+        .btn-secondary { background: var(--aws-orange); color: white; }
+        code { background: #f1f3f5; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: var(--dark-bg); color: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85rem; }
+        pre code { background: none; padding: 0; color: inherit; }
+        ul, ol { margin: 1rem 0 1rem 1.5rem; }
+        li { margin: 0.5rem 0; }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+        footer { background: var(--dark-bg); color: white; text-align: center; padding: 2rem; margin-top: 3rem; }
+        footer a { color: var(--snowflake-blue); }
+        .comment { color: #6a9955; }
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧹 Module 7: Cleanup</h1>
+        <p>Remove workshop resources</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="00-prerequisites.html">Prerequisites</a></li>
+            <li><a href="01-overview.html">Overview</a></li>
+            <li><a href="02-snowflake-setup.html">Snowflake Setup</a></li>
+            <li><a href="03-document-ai.html">Document AI</a></li>
+            <li><a href="04-semantic-view.html">Semantic View</a></li>
+            <li><a href="05-agents.html">AI Agents</a></li>
+            <li><a href="06-application.html">Application</a></li>
+            <li><a href="07-cleanup.html" class="active">Cleanup</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <div class="card">
+            <h2>⏱️ Module Overview</h2>
+            <p><strong>Estimated time:</strong> 5 minutes</p>
+            <p>This module guides you through cleaning up the resources created during the workshop to avoid unnecessary charges.</p>
+            
+            <div class="alert alert-warning">
+                <strong>⚠️ Important:</strong> Only perform cleanup when you're completely done with the workshop 
+                and don't need the resources anymore. This action is <strong>irreversible</strong>.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Option 1: Keep Your Trial Account</h2>
+            
+            <p>If you want to continue exploring Snowflake after the workshop, you can keep your trial account active. 
+            Your trial includes <strong>$400 in credits</strong> valid for 30 days.</p>
+            
+            <h3>To Minimize Costs While Keeping Data:</h3>
+            <ul>
+                <li><strong>Suspend the warehouse</strong> when not in use (it auto-suspends after 2 minutes of inactivity)</li>
+                <li><strong>Drop the Cortex Search service</strong> if not needed (it has ongoing compute costs)</li>
+            </ul>
+            
+            <pre><code><span class="comment">-- Suspend warehouse to stop compute charges</span>
+<span class="keyword">ALTER WAREHOUSE</span> WORKSHOP_WH <span class="keyword">SUSPEND</span>;
+
+<span class="comment">-- Drop search service to stop indexing costs (optional)</span>
+<span class="keyword">DROP CORTEX SEARCH SERVICE IF EXISTS</span> WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE;</code></pre>
+        </div>
+        
+        <div class="card">
+            <h2>Option 2: Complete Snowflake Cleanup</h2>
+            
+            <p>To remove all workshop resources from Snowflake:</p>
+            
+            <pre><code><span class="keyword">USE ROLE</span> ACCOUNTADMIN;
+
+<span class="comment">-- Drop the Cortex Agent</span>
+<span class="keyword">DROP CORTEX AGENT IF EXISTS</span> WORKSHOP_DB.AGENTS.WORKSHOP_AGENT;
+
+<span class="comment">-- Drop the Cortex Search Service</span>
+<span class="keyword">DROP CORTEX SEARCH SERVICE IF EXISTS</span> WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE;
+
+<span class="comment">-- Drop the Semantic View</span>
+<span class="keyword">DROP SEMANTIC VIEW IF EXISTS</span> WORKSHOP_DB.REVENUE_TIMESERIES.REVENUE_SEMANTIC_VIEW;
+
+<span class="comment">-- Drop External Access Integration (if created for Bedrock)</span>
+<span class="keyword">DROP INTEGRATION IF EXISTS</span> BEDROCK_ACCESS;
+
+<span class="comment">-- Drop Secrets (if created)</span>
+<span class="keyword">DROP SECRET IF EXISTS</span> WORKSHOP_DB.AGENTS.AWS_CREDENTIALS;
+
+<span class="comment">-- Drop the entire database (removes all tables, stages, functions)</span>
+<span class="keyword">DROP DATABASE IF EXISTS</span> WORKSHOP_DB;
+
+<span class="comment">-- Drop the warehouse</span>
+<span class="keyword">DROP WAREHOUSE IF EXISTS</span> WORKSHOP_WH;</code></pre>
+            
+            <div class="alert alert-danger">
+                <strong>⚠️ Warning:</strong> Dropping the database will permanently delete all data, including 
+                the parsed documents, revenue tables, and any notebooks or Streamlit apps stored in the database.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Option 3: AWS Cleanup</h2>
+            
+            <p>If you deployed the Bedrock Agent CloudFormation stack, you should clean it up to avoid AWS charges:</p>
+            
+            <h3>Delete CloudFormation Stack</h3>
+            <ol>
+                <li>Go to the <strong>AWS Console</strong> → <strong>CloudFormation</strong></li>
+                <li>Select the stack you created (e.g., <code>workshop-bedrock-agent</code>)</li>
+                <li>Click <strong>Delete</strong></li>
+                <li>Confirm the deletion</li>
+            </ol>
+            
+            <div class="alert alert-info">
+                <strong>💡 Note:</strong> The CloudFormation delete will remove:
+                <ul>
+                    <li>Bedrock Agent and Action Groups</li>
+                    <li>Lambda functions</li>
+                    <li>IAM roles and policies</li>
+                    <li>Secrets Manager secrets</li>
+                </ul>
+            </div>
+            
+            <h3>Workshop Studio Accounts</h3>
+            <p>If you used AWS Workshop Studio, your temporary AWS account will be automatically cleaned up 
+            after the workshop event ends. No action required.</p>
+        </div>
+        
+        <div class="card">
+            <h2>Option 4: Keep Everything for Later</h2>
+            
+            <p>If you want to revisit this workshop later, you can:</p>
+            
+            <ol>
+                <li><strong>Keep your Snowflake trial</strong> - You have 30 days and $400 credits</li>
+                <li><strong>Suspend the warehouse</strong> - No charges when suspended</li>
+                <li><strong>Bookmark your account URL</strong> - Find it in your confirmation email</li>
+                <li><strong>Export any notebooks or apps</strong> - Download them for backup</li>
+            </ol>
+            
+            <div class="alert alert-success">
+                <strong>💡 Tip:</strong> You can always recreate everything by running through the workshop 
+                again using the SQL scripts and code provided.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🎉 Congratulations!</h2>
+            
+            <p>You've completed the <strong>AWS + Snowflake GenAI Workshop</strong>!</p>
+            
+            <h3>What You Accomplished</h3>
+            <ul>
+                <li>✅ Parsed PDF documents using <strong>Document AI</strong></li>
+                <li>✅ Built semantic search with <strong>Cortex Search</strong></li>
+                <li>✅ Created a <strong>Semantic View</strong> for natural language SQL</li>
+                <li>✅ Deployed an <strong>AI Agent</strong> (Cortex or Bedrock)</li>
+                <li>✅ Built an interactive <strong>chat application</strong></li>
+            </ul>
+            
+            <h3>Continue Learning</h3>
+            <ul>
+                <li><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex" target="_blank">Snowflake Cortex Documentation</a></li>
+                <li><a href="https://docs.aws.amazon.com/bedrock/" target="_blank">Amazon Bedrock Documentation</a></li>
+                <li><a href="https://quickstarts.snowflake.com/" target="_blank">Snowflake Quickstarts</a></li>
+                <li><a href="https://community.snowflake.com/" target="_blank">Snowflake Community</a></li>
+            </ul>
+            
+            <h3>Feedback</h3>
+            <p>We'd love to hear your feedback on this workshop! Please share your thoughts with the workshop organizers.</p>
+        </div>
+        
+        <div class="card" style="background: linear-gradient(135deg, #e3f2fd 0%, #e8f5e9 100%); text-align: center;">
+            <h2 style="border: none;">Thank You! 🙏</h2>
+            <p style="font-size: 1.2rem;">
+                Thank you for participating in the AWS + Snowflake GenAI Workshop.
+            </p>
+            <p>
+                We hope you found it valuable and are excited to apply these skills in your own projects!
+            </p>
+            <div style="margin-top: 2rem;">
+                <span style="font-size: 3rem;">☁️ ❄️ 🤖</span>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="06-application.html" class="btn btn-secondary">← Application</a>
+            <a href="index.html" class="btn btn-primary">Back to Home →</a>
+        </div>
+    </main>
+    
+    <footer>
+        <p>AWS + Snowflake GenAI Workshop</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+            <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex">Snowflake Cortex Docs</a> · 
+            <a href="https://docs.aws.amazon.com/bedrock/">Amazon Bedrock Docs</a>
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.8rem; color: #888;">
+            Licensed under MIT-0 License
+        </p>
+    </footer>
+</body>
+</html>
