@@ -1,0 +1,885 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cloud formation template to deploy
+Parameters:
+
+  SnowflakeAccount:
+    Type: String
+    Description: Snowflake Account
+
+  SnowflakeDatabase:
+    Default: WORKSHOP_DB
+    Type: String
+    Description: Snowflake DB
+
+  SnowflakeWarehouse:
+    Default: WORKSHOP_WH
+    Type: String
+    Description: Snowflake WH
+
+  CortexAnalystSchema:
+    Default: REVENUE_TIMESERIES
+    Type: String
+    Description: Cortex Analyst Schema in Database
+
+  CortexSearchSchema:
+    Default: PUBLIC
+    Type: String
+    Description: Cortex Search Service Schema in Database
+
+  CortexSearchAirbnbService:
+    Default: airbnb_svc
+    Type: String
+    Description: Cortex Search Airbnb Service    
+
+  CortexSearchFomcService:
+    Default: fomc_meeting
+    Type: String
+    Description: Cortex Search Fomc Service  
+
+  SnowflakeStage:
+    Default: RAW_DATA
+    Type: String
+    Description: Snowflake Stage
+
+  SemanticModelFile:
+    Default: revenue_timeseries.yaml
+    Type: String
+    Description: Semantic Model File
+
+  SnowflakeRole:
+    Default: ACCOUNTADMIN
+    Type: String
+    Description: Snowflake Role
+  
+  SnowflakeUser:
+    Default: workshop_user
+    Type: String
+    Description: Username for the Snowflake Account login
+
+  SnowflakePassword:
+    Type: String
+    Description: Password for the Snowflake Account login
+    NoEcho: true
+  
+  RegionName:
+    Default: us-west-2
+    Type: String
+    Description: REGION_NAME
+
+  AgentName:
+      Default: cortex-bedrock-agent
+      Type: String
+      Description: The name of the agent.
+
+  Limit:
+      Default: 5
+      Type: String
+      Description: Limit
+
+  LambdaLayerS3Bucket:
+    Type: String
+    Description: S3 Bucket to store Snowflake libraries compressed file used in lambda layers.
+
+  SnowflakeConnectorCompressedFile:
+    Default: snowflake_layer/snowflake_modules.zip
+    Type: String
+    Description: Snowflake Connector Compressed File in S3.
+
+  # SnowflakeLambdaLayerArn:
+  #   Type: String    
+  #   Description: Arn for Snowflake Lambda Layer generated in previous step.
+
+Resources:
+
+  SnowflakeAccountSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name:
+        Fn::Sub: ${AWS::StackName}-creds
+      Description: Snowflake Account Secret
+      SecretString: !Sub
+          '{"user":"${SnowflakeUser}","password":"${SnowflakePassword}"}'
+
+  SnowflakeLambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+      - python3.8
+      - python3.9
+      - python3.10
+      - python3.11
+      Content:
+        S3Bucket: !Ref LambdaLayerS3Bucket
+        S3Key: !Ref SnowflakeConnectorCompressedFile
+      Description: SnowflakeLambda Layer including snowflake          
+
+  CortexAnalyzeRevenueExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: LambdaExecutionLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':log-group:/aws/lambda/'
+                      - Fn::Sub: ${AWS::StackName}-analyst-analyze-revenue
+                      - ':*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':*'
+
+  CortexSearchAirbnbListingsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: LambdaExecutionLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':log-group:/aws/lambda/'
+                      - Fn::Sub: ${AWS::StackName}-search-airbnb-listings
+                      - ':*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':*'                      
+
+  CortexSearchFOMCMeetingsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: LambdaExecutionLogsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':log-group:/aws/lambda/'
+                      - Fn::Sub: ${AWS::StackName}-search-fomc-meetings                      
+                      - ':*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource:
+                  - !Join
+                    - ''
+                    - - 'arn:'
+                      - !Ref 'AWS::Partition'
+                      - ':logs:'
+                      - !Ref 'AWS::Region'
+                      - ':'
+                      - !Ref 'AWS::AccountId'
+                      - ':*'                      
+
+  LambdaBasicExecutionPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: SecretManagerGetValue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:         
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: '*'            
+
+      Roles:
+        - !Ref CortexAnalyzeRevenueExecutionRole
+        - !Ref CortexSearchAirbnbListingsExecutionRole
+        - !Ref CortexSearchFOMCMeetingsExecutionRole
+
+    DependsOn: 
+    - CortexAnalyzeRevenueExecutionRole
+    - CortexSearchAirbnbListingsExecutionRole
+    - CortexSearchFOMCMeetingsExecutionRole
+
+  CortexAnalyzeRevenueLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-analyst-analyze-revenue
+      Description: Calls Snowflake Cortex Analyst
+      Timeout: 300
+      Role: !GetAtt CortexAnalyzeRevenueExecutionRole.Arn
+      Runtime: python3.11
+      Environment:
+        Variables:
+          SNOWFLAKE_CREDS: 
+            Fn::Sub: ${AWS::StackName}-creds
+          REGION_NAME: !Ref RegionName
+          SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount          
+          SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
+          CORTEX_ANALYST_SCHEMA: !Ref CortexAnalystSchema
+          SNOWFLAKE_STAGE: !Ref SnowflakeStage
+          SEMANTIC_MODEL_FILE: !Ref SemanticModelFile
+          SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
+          SNOWFLAKE_ROLE: !Ref SnowflakeRole
+      Layers:
+      - !Ref SnowflakeLambdaLayer
+      Code:
+        ZipFile: |
+          import boto3
+          import botocore
+          from botocore.exceptions import ClientError
+          import json
+          import logging
+          import os
+          import requests
+          import snowflake.connector
+
+          DATABASE = os.environ['SNOWFLAKE_DATABASE']
+          SCHEMA = os.environ['CORTEX_ANALYST_SCHEMA']
+          STAGE = os.environ['SNOWFLAKE_STAGE']
+          FILE = os.environ['SEMANTIC_MODEL_FILE']
+          WAREHOUSE = os.environ['SNOWFLAKE_WAREHOUSE']
+          ROLE = os.environ['SNOWFLAKE_ROLE']
+          ACCOUNT = os.environ['SNOWFLAKE_ACCOUNT']
+
+          def get_secret(snowflake_creds, region_name):
+              # Create a Secrets Manager client
+              session = boto3.session.Session()
+              secret_manager_client = session.client(
+                  service_name='secretsmanager',
+                  region_name=region_name
+              )
+
+              try:
+                  get_secret_value_response = secret_manager_client.get_secret_value(
+                      SecretId=snowflake_creds
+                  )
+              except ClientError as e:
+                  # For a list of exceptions thrown, see
+                  # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+                  raise e
+
+              secret = json.loads(get_secret_value_response['SecretString'])
+              
+              return secret
+              
+          def get_textosql(secret, question):
+              print('question')
+              print(question)
+
+              conn = snowflake.connector.connect(
+              user=secret['user'],
+              password=secret['password'],
+              account=ACCOUNT,
+              warehouse=WAREHOUSE,
+              role=ROLE,
+              )
+
+              request_body = {
+              "messages": [{"role": "user", "content": [{"type": "text", "text": question}]}],
+              "semantic_model_file": f"@{DATABASE}.{SCHEMA}.{STAGE}/{FILE}",
+              }
+
+              HOST_URL = "https://{ACCOUNT}.snowflakecomputing.com/api/v2/cortex/analyst/message".format(ACCOUNT=ACCOUNT)
+              
+              response = requests.post(
+              url=HOST_URL,
+              json=request_body,
+              headers={
+              "Authorization": f'Snowflake Token="{conn.rest.token}"',
+              "Content-Type": "application/json",
+              },
+              )
+              
+              resp_content = response.json()['message']['content']
+              print(resp_content)
+              
+              sql = [r['statement'] for r in resp_content if r['type'] == 'sql'][0]
+              print(sql)
+              
+              return sql
+
+          ## Fucntion To retrieve query from the database
+          def get_query_result(ctx, sql):
+              cs = ctx.cursor()
+              cs.execute(sql)
+              
+              col_header = ", ".join([ c[0] for c in cs.description ])
+              
+              result = '\n'.join([str(row) for row in cs.fetchall()])
+                  
+              query_result = "SQL Command{new_line}{sql}{new_line}----------------{new_line}Query Result{new_line}{col_header}{new_line}{result}".format(
+                  sql=sql,
+                  new_line='\n',
+                  col_header=col_header, 
+                  result=result
+                  )
+              print(query_result)
+              
+              cs.close()
+              ctx.close()
+                  
+              return query_result
+              # return result
+
+          def lambda_handler(event, context):
+              logger = logging.getLogger()
+              logger.setLevel(logging.INFO)
+              logger.info("REQUEST RECEIVED: %s" % event);
+              
+              try:
+                  api_path = event['inputText']
+                  
+                  print('api_path')
+                  print(api_path)
+                  
+                  try:
+                      secret = get_secret(os.environ['SNOWFLAKE_CREDS'], os.environ['REGION_NAME'])
+                      
+                      # sql = get_textosql(secret, event['inputText'])
+                      
+                      ctx = snowflake.connector.connect(
+                          user=secret['user'],
+                          password=secret['password'],
+                          account=ACCOUNT
+                          )
+                      print('ctx')
+                      print(ctx)
+                      query_result = get_query_result(
+                          ctx,
+                          get_textosql(secret, api_path)
+                          )
+                      print(query_result)
+                      
+                  except ClientError as e:
+                      # For a list of exceptions thrown, see
+                      # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+                      print(e)
+                      raise e
+
+                  function_response_body = {
+                      "TEXT": {
+                          "body": f"Here is the answer to question {api_path}: {query_result}."
+                          }
+                  }
+
+                  action_response = {
+                      "actionGroup": event['actionGroup'],
+                      "function": event['function'],
+                      "functionResponse": {"responseBody": function_response_body},
+                  }
+
+
+                  response = {"response": action_response, "messageVersion": event["messageVersion"]}
+              
+              except ClientError as e:
+                  print(euioo)
+                  raise e
+              # return api_response
+              return response
+
+    DependsOn: 
+    - CortexAnalyzeRevenueExecutionRole
+    - LambdaBasicExecutionPolicy
+    - SnowflakeLambdaLayer
+
+  CortexSearchAirbnbListingsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-search-airbnb-listings
+      Description: Calls Snowflake Cortex Search
+      Timeout: 300
+      Role: !GetAtt CortexSearchAirbnbListingsExecutionRole.Arn
+      Runtime: python3.11
+      Environment:
+        Variables:
+          SNOWFLAKE_CREDS: 
+            Fn::Sub: ${AWS::StackName}-creds
+          REGION_NAME: !Ref RegionName
+          SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount          
+          SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
+          CORTEX_SEARCH_SCHEMA: !Ref CortexSearchSchema
+          CORTEX_SEARCH_SERVICE: !Ref CortexSearchAirbnbService
+          SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
+          SNOWFLAKE_ROLE: !Ref SnowflakeRole
+      Layers:
+      - !Ref SnowflakeLambdaLayer          
+      Code:
+        ZipFile: |
+          import boto3
+          import botocore
+          from botocore.exceptions import ClientError
+          import http.client
+          import json
+          import os
+          from snowflake.core import Root
+          from snowflake.snowpark import Session
+
+          def get_secret(snowflake_creds, region_name):
+              # Create a Secrets Manager client
+              session = boto3.session.Session()
+              secret_manager_client = session.client(
+                  service_name='secretsmanager',
+                  region_name=region_name
+              )
+
+              try:
+                  get_secret_value_response = secret_manager_client.get_secret_value(
+                      SecretId=snowflake_creds
+                  )
+              except ClientError as e:
+                  # For a list of exceptions thrown, see
+                  # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+                  raise e
+
+              secret = json.loads(get_secret_value_response['SecretString'])
+              
+              return secret
+
+          def get_results(secret, search_query, room_type, amenities, limit):
+
+              connection_params = {
+              "account": os.environ['SNOWFLAKE_ACCOUNT'],
+              "user": secret['user'],
+              "password": secret['password'],
+              "role": os.environ['SNOWFLAKE_ROLE'],
+              "database": os.environ['SNOWFLAKE_DATABASE'],
+              "warehouse": os.environ['SNOWFLAKE_WAREHOUSE'],
+              "schema": os.environ['CORTEX_SEARCH_SCHEMA'],
+              }
+              
+              session = Session.builder.configs(connection_params).create()
+              root = Root(session)
+              
+              print('root')
+              print(root)
+              
+              # fetch service
+              cortex_search_service = (root
+              .databases[os.environ['SNOWFLAKE_DATABASE']]
+              .schemas[os.environ['CORTEX_SEARCH_SCHEMA']]
+              .cortex_search_services[os.environ['CORTEX_SEARCH_SERVICE']]
+              # .cortex_search_services["airbnb_svc"]
+              )
+              
+              print('cortex_search_service')
+              print(cortex_search_service)    
+              
+              # query service
+              resp = cortex_search_service.search(
+                query=search_query,
+                columns=["ROOM_TYPE", "AMENITIES"],
+                filter={
+                  "@and": [
+                    { "@eq": { "ROOM_TYPE": room_type } },
+                    { "@contains": { "AMENITIES": amenities } }
+                  ]
+              },
+                limit=limit
+              )
+              
+              print('1')
+              print(resp)
+              print(type(resp))
+              
+              return resp.to_json()
+
+          def lambda_handler(event, context):
+              agent = event['agent']
+              action_group = event["actionGroup"]
+              function = event["function"]
+              parameters = event.get("parameters", [])
+              
+              print('parameters')
+              print(parameters)
+
+              # Extracting values from parameters
+              param_dict = {param['name'].lower(): param['value'] for param in parameters}
+
+              search_query = param_dict.get('search_query')
+              room_type = param_dict.get('room_type')
+              amenities = param_dict.get('amenities')
+              limit = int(param_dict.get('limit'))
+              
+              secret = get_secret(os.environ['SNOWFLAKE_CREDS'], os.environ['REGION_NAME'])
+              
+              search_results: str = ""
+              search_results = get_results(secret, search_query, room_type, amenities, limit)
+
+              # Prepare the response
+              function_response_body = {"TEXT": {"body": f"Here are the top search results for the query '{search_query}': {search_results} "}}
+              action_response = {
+                  "actionGroup": action_group,
+                  "function": function,
+                  "functionResponse": {"responseBody": function_response_body},
+              }
+              response = {"response": action_response, "messageVersion": event["messageVersion"]}
+              return response
+
+    DependsOn: 
+    - CortexSearchAirbnbListingsExecutionRole
+    - LambdaBasicExecutionPolicy
+    - SnowflakeLambdaLayer
+
+  CortexSearchFOMCMeetingsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.lambda_handler
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-search-fomc-meetings
+      Description: Calls Snowflake Cortex Search
+      Timeout: 300
+      Role: !GetAtt CortexSearchFOMCMeetingsExecutionRole.Arn
+      Runtime: python3.11
+      Environment:  
+        Variables:
+          SNOWFLAKE_CREDS: 
+            Fn::Sub: ${AWS::StackName}-creds
+          REGION_NAME: !Ref RegionName
+          SNOWFLAKE_ACCOUNT: !Ref SnowflakeAccount          
+          SNOWFLAKE_DATABASE: !Ref SnowflakeDatabase
+          CORTEX_SEARCH_SCHEMA: !Ref CortexSearchSchema
+          CORTEX_SEARCH_SERVICE: !Ref CortexSearchFomcService
+          SNOWFLAKE_WAREHOUSE: !Ref SnowflakeWarehouse
+          SNOWFLAKE_ROLE: !Ref SnowflakeRole
+          LIMIT: !Ref Limit
+      Layers:
+      - !Ref SnowflakeLambdaLayer
+      Code:
+        ZipFile: |
+          import boto3
+          import botocore
+          from botocore.exceptions import ClientError
+          import http.client
+          import json
+          import os
+          from snowflake.core import Root
+          from snowflake.snowpark import Session
+
+          def get_secret(snowflake_creds, region_name):
+              # Create a Secrets Manager client
+              session = boto3.session.Session()
+              secret_manager_client = session.client(
+                  service_name='secretsmanager',
+                  region_name=region_name
+              )
+
+              try:
+                  get_secret_value_response = secret_manager_client.get_secret_value(
+                      SecretId=snowflake_creds
+                  )
+              except ClientError as e:
+                  # For a list of exceptions thrown, see
+                  # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+                  raise e
+
+              secret = json.loads(get_secret_value_response['SecretString'])
+              
+              return secret
+
+          def get_results(secret, question):
+
+              connection_params = {
+              "account": os.environ['SNOWFLAKE_ACCOUNT'],
+              "user": secret['user'],
+              "password": secret['password'],
+              "role": os.environ['SNOWFLAKE_ROLE'],
+              "database": os.environ['SNOWFLAKE_DATABASE'],
+              "warehouse": os.environ['SNOWFLAKE_WAREHOUSE'],
+              "schema": os.environ['CORTEX_SEARCH_SERVICE'],
+              }
+              
+              session = Session.builder.configs(connection_params).create()
+              root = Root(session)
+              
+              print('root')
+              print(root)
+              
+              # fetch service
+              cortex_search_service = (root
+              .databases[os.environ['SNOWFLAKE_DATABASE']]
+              .schemas[os.environ['CORTEX_SEARCH_SCHEMA']]
+              .cortex_search_services[os.environ['CORTEX_SEARCH_SERVICE']]
+              # .cortex_search_services["airbnb_svc"]
+              )
+
+              limit = os.environ['LIMIT']
+              
+              columns = ["chunk", "file_url", "relative_path"]
+              filter={"@and": [{"@eq": {"language": "English"}}]}
+
+              print('query')
+              print(question)
+
+              print('columns')
+              print(type(columns))
+              print(columns)
+
+              print('filter')
+              print(type(filter))
+              print(filter)    
+              
+              # query service
+              context_documents = cortex_search_service.search(
+              query=question,
+              columns=columns,
+              filter=filter,
+              limit=int(limit)
+              )
+
+              results = context_documents.results
+              
+              context = [r['chunk'] for r in results]
+
+              ref = [{r['relative_path'], r['file_url']} for r in results]
+              
+              return context, ref, results
+
+          def lambda_handler(event, context):
+              agent = event['agent']
+              action_group = event["actionGroup"]
+              function = event["function"]
+              parameters = event.get("parameters", [])
+              
+              print('parameters')
+              print(parameters)
+
+              # Extracting values from parameters
+              param_dict = {param['name'].lower(): param['value'] for param in parameters}
+
+              question = param_dict.get('question')
+
+              print('question')
+              print(question)  
+
+              secret = get_secret(os.environ['SNOWFLAKE_CREDS'], os.environ['REGION_NAME'])
+              
+              results: str = ""
+              prompt_context, ref, results = get_results(secret, question)
+
+              # ref = " ".join(str(r) for r in ref)
+
+              # print('ref')
+              # print(ref)    
+
+              # Prepare the response
+
+              # function_response_body = {"TEXT": {"body": f"Answer the user question with some stats '{question}' using the context {prompt_context}"}}
+
+              function_response_body = {
+                  "TEXT": {
+                      "body": f"Answer the user question with some stats '{question}' using the context {prompt_context}."
+                      }
+                      }
+              
+              action_response = {
+                  "actionGroup": action_group,
+                  "function": function,
+                  "functionResponse": {"responseBody": function_response_body},
+              }
+
+              response = {"response": action_response, "messageVersion": event["messageVersion"]}
+              return response
+
+
+    DependsOn: 
+    - CortexSearchAirbnbListingsExecutionRole
+    - LambdaBasicExecutionPolicy
+    - SnowflakeLambdaLayer
+
+  CortexAnalyzeRevenueResourcePolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CortexAnalyzeRevenueLambda.Arn
+      Principal: bedrock.amazonaws.com
+      SourceAccount: !Sub ${AWS::AccountId}
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*  
+
+  CortexSearchAirbnbResourcePolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CortexSearchAirbnbListingsLambda.Arn
+      Principal: bedrock.amazonaws.com
+      SourceAccount: !Sub ${AWS::AccountId}
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*  
+
+  CortexSearchFOMCResourcePolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt CortexSearchFOMCMeetingsLambda.Arn
+      Principal: bedrock.amazonaws.com
+      SourceAccount: !Sub ${AWS::AccountId}
+      SourceArn: !Sub arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*                
+
+  AmazonBedrockAgentsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: AmazonBedrockAgentsRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: bedrock.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+  
+  AgentResource:
+    Type: AWS::Bedrock::Agent
+    Properties:
+      AgentName: !Ref AgentName
+      AgentResourceRoleArn: !GetAtt AmazonBedrockAgentsRole.Arn
+      AutoPrepare: true
+      FoundationModel: "anthropic.claude-3-5-sonnet-20240620-v1:0"
+      Instruction: "You are an agent that can handle various tasks. First look at all the tasks below and then decide which task to perform. 
+                    1/ answer questions related to revenue, profit, expenses and perfromance of the business of a retail company by using the action group ag-cortex-analyze-revenue. 
+                    2/ Helping users do research and finding up-to-date information on airbnb listing and rooms by using action group ag-cortex-search-airbnb-listing. 
+                    3/ Helping users answer questions about FOMC_MEETING on Federal Open Market Committee (FOMC), gdp, unemployment, fed's view, market change using action group ag-cortex-search-fomc-meetings."
+      IdleSessionTTLInSeconds: 60
+      ActionGroups:
+        - ActionGroupName: ag-cortex-analyze-revenue
+          ActionGroupExecutor:
+            Lambda: !GetAtt CortexAnalyzeRevenueLambda.Arn
+          FunctionSchema:
+            Functions:
+              - Name: cortex-analyze-revenue
+                Description: cortex-analyze-revenue
+        - ActionGroupName: ag-cortex-search-airbnb-listing
+          ActionGroupExecutor:
+            Lambda: !GetAtt CortexSearchAirbnbListingsLambda.Arn
+          FunctionSchema:
+            Functions:
+              - Name: cortex-search-airbnb-listing
+                Description: cortex-search-airbnb-listing
+                Parameters:
+                  amenities:
+                    Description: amenities
+                    Required: False
+                    Type: string
+                  limit:
+                    Description: limit
+                    Required: False
+                    Type: string
+                  room_type:
+                    Description: room_type
+                    Required: False
+                    Type: string
+                  search_query:
+                    Description: search_query
+                    Required: True
+                    Type: string
+        - ActionGroupName: ag-cortex-search-fomc-meetings
+          ActionGroupExecutor:
+            Lambda: !GetAtt CortexSearchFOMCMeetingsLambda.Arn
+          FunctionSchema:
+            Functions:
+              - Name: cortex-search-fomc-meetings
+                Description: cortex-search-fomc-meetings
+                Parameters:
+                  question:
+                    Description: question
+                    Required: True
+                    Type: string
+
+    DependsOn: 
+    - CortexAnalyzeRevenueLambda
+    - CortexSearchAirbnbListingsLambda
+    - CortexSearchFOMCMeetingsLambda
+    - AmazonBedrockAgentsRole
+  
+  AgentAliasResource:
+    Type: AWS::Bedrock::AgentAlias
+    Properties:
+      AgentId: !GetAtt AgentResource.AgentId
+      AgentAliasName: !Sub ${AgentName}-alias
+    DependsOn: AgentResource
+
+Outputs:
+  
+  Region:
+    Description: Deployed Region
+    Value: !Ref AWS::Region
+
+  AgentId:
+    Description: Deployed Bedrock AgentId
+    Value: !GetAtt AgentResource.AgentId
+
+  AliasId:
+    Description: Deployed Bedrock Agent alias Id
+    Value: !GetAtt AgentAliasResource.AgentAliasId

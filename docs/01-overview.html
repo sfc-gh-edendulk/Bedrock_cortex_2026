@@ -91,6 +91,38 @@
         </div>
         
         <div class="card">
+            <h2>🏗️ Workshop Architecture</h2>
+            <p>
+                This diagram shows the complete architecture we'll build in this workshop. Amazon Bedrock Agents 
+                orchestrate user queries, routing them to the appropriate Snowflake Cortex service via AWS Lambda functions.
+            </p>
+            
+            <img src="images/genai-agentsforbedrock-cortex.png" alt="Workshop Architecture - Bedrock Agents with Snowflake Cortex" 
+                 style="width: 100%; max-width: 800px; display: block; margin: 1.5rem auto;">
+            
+            <h3>How It Works</h3>
+            <ol>
+                <li><strong>User asks a question</strong> via the Streamlit chatbot application</li>
+                <li><strong>Snowpark External Access</strong> sends the prompt to Amazon Bedrock</li>
+                <li><strong>Agents for Amazon Bedrock</strong> receives the prompt and routes to the Foundation Model</li>
+                <li><strong>Claude Sonnet</strong> decides which tool/action group to use based on the question</li>
+                <li><strong>Action Groups</strong> execute the appropriate Lambda function:
+                    <ul>
+                        <li><strong>Action Group 1:</strong> Calls Cortex Analyst for structured data questions (revenue, metrics)</li>
+                        <li><strong>Action Group 2:</strong> Calls Cortex Search for unstructured document queries (FOMC minutes)</li>
+                    </ul>
+                </li>
+                <li><strong>Lambda functions</strong> connect to Snowflake and execute the Cortex queries</li>
+                <li><strong>Response flows back</strong> through the agent to the user</li>
+            </ol>
+            
+            <div class="alert alert-info">
+                <strong>💡 Key Insight:</strong> The agent intelligently routes questions to the right tool—no need for 
+                users to know whether their question requires a database query or document search!
+            </div>
+        </div>
+        
+        <div class="card">
             <h2 class="aws-header">☁️ AWS Technologies</h2>
             <p>Amazon Web Services provides the foundational cloud infrastructure and AI services that power this workshop.</p>
             

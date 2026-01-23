@@ -262,6 +262,122 @@
         </div>
         
         <div class="card">
+            <h2>Step 5: AWS Environment Setup</h2>
+            
+            <p>Configure Amazon Bedrock model access and generate AWS credentials for the workshop.</p>
+            
+            <h3>5.1 Enable Bedrock Model Access</h3>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h4>Navigate to Amazon Bedrock</h4>
+                    <p>In the AWS Console, search for <strong>Amazon Bedrock</strong> and open the service.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h4>Request Model Access</h4>
+                    <ul>
+                        <li>Click on <strong>Model access</strong> in the left sidebar</li>
+                        <li>Click <strong>Manage model access</strong></li>
+                        <li>Find <strong>Anthropic</strong> section and select <strong>Claude 3.5 Sonnet</strong></li>
+                        <li>Click <strong>Request model access</strong></li>
+                    </ul>
+                    <img src="images/modify-model-access.png" alt="Bedrock Model Access - Select Claude 3.5 Sonnet" 
+                         style="width: 100%; max-width: 700px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>💡 Note:</strong> Model access is typically granted instantly, but may take a few minutes. 
+                You'll see "Access granted" when it's ready.
+            </div>
+            
+            <h3>5.2 Create IAM User for API Access</h3>
+            
+            <p>You need AWS access keys to allow Snowflake to call the Bedrock Agent. Follow these steps:</p>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h4>Open IAM Console</h4>
+                    <p>In the AWS Console, search for <strong>IAM</strong> and open the service. Click on <strong>Users</strong> under "Access management".</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h4>Create a New User</h4>
+                    <ul>
+                        <li>Click <strong>Create user</strong></li>
+                        <li>Enter a user name (e.g., <code>workshop-user</code>)</li>
+                        <li>Click <strong>Next</strong></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <h4>Set Permissions</h4>
+                    <ul>
+                        <li>Select <strong>Attach policies directly</strong></li>
+                        <li>Search for and select <strong>AdministratorAccess</strong></li>
+                        <li>Click <strong>Next</strong>, then <strong>Create user</strong></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <div class="step-content">
+                    <h4>Generate Access Keys</h4>
+                    <ul>
+                        <li>Click on the user you just created</li>
+                        <li>Go to the <strong>Security credentials</strong> tab</li>
+                        <li>Under "Access keys", click <strong>Create access key</strong></li>
+                        <li>Select <strong>Third-party service</strong> as the use case</li>
+                        <li>Check the confirmation box and click <strong>Next</strong></li>
+                        <li>Click <strong>Create access key</strong></li>
+                    </ul>
+                    <img src="images/iam_access.png" alt="IAM User - Create Access Key" 
+                         style="width: 100%; max-width: 500px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5</span>
+                <div class="step-content">
+                    <h4>Save Your Credentials</h4>
+                    <p>Copy and save these values securely—you'll need them later:</p>
+                    <ul>
+                        <li><strong>Access key ID</strong></li>
+                        <li><strong>Secret access key</strong></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="alert alert-danger">
+                <strong>🔐 Security Warning:</strong> Never share your access keys or commit them to source control. 
+                These credentials provide full access to your AWS account!
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>⚠️ Managed AWS Accounts:</strong> If you're using a managed AWS account (via Workshop Studio), 
+                you may see temporary credentials with an <strong>AWS Session Token</strong>. In this case, you'll also 
+                need to copy the session token, and note that these credentials expire after a few hours.
+            </div>
+            
+            <img src="images/cl_access.png" alt="AWS Credentials Dialog - Access Key, Secret Key, and Session Token" 
+                 style="width: 100%; max-width: 600px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <p style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.5rem;"><em>Example: AWS credentials dialog showing access key, secret key, and session token options</em></p>
+        </div>
+        
+        <div class="card">
             <h2>✅ Prerequisites Checklist</h2>
             
             <p>Before proceeding, confirm you have completed:</p>
@@ -272,6 +388,8 @@
                 <li>☐ Found your Snowflake account identifier</li>
                 <li>☐ Submitted the registration form</li>
                 <li>☐ Received AWS Workshop Studio access (or will receive at workshop start)</li>
+                <li>☐ Enabled Amazon Bedrock model access for Claude 3.5 Sonnet</li>
+                <li>☐ Created IAM user and saved access keys</li>
             </ul>
             
             <div class="alert alert-success">

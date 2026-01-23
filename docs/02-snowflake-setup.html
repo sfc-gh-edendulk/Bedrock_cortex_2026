@@ -259,6 +259,32 @@ FILE_FORMAT = (TYPE = CSV, SKIP_HEADER = 1, FIELD_OPTIONALLY_ENCLOSED_BY = <span
         </div>
         
         <div class="card">
+            <h2>Step 7: Load Additional Data (Optional)</h2>
+            
+            <p>For additional Cortex Search examples, you can load Airbnb listings data using the Snowsight <strong>Add Data</strong> wizard:</p>
+            
+            <ol>
+                <li>Navigate to <strong>Data</strong> → <strong>Add Data</strong> in Snowsight</li>
+                <li>Select <strong>Load data into a Table</strong></li>
+                <li>Upload a JSON file with embeddings data</li>
+                <li>Configure the file format and column mappings</li>
+            </ol>
+            
+            <img src="images/basic_tutorial_add_data_3b.png" alt="Snowflake Add Data - Schema Configuration" 
+                 style="width: 100%; max-width: 700px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <p style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.5rem;"><em>Column schema configuration when loading JSON data</em></p>
+            
+            <img src="images/basic_tutorial_add_data_3.png" alt="Snowflake Add Data - Column Selection" 
+                 style="width: 100%; max-width: 700px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <p style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.5rem;"><em>Selecting columns and data types for the Airbnb listings table</em></p>
+            
+            <div class="alert alert-info">
+                <strong>💡 Note:</strong> This optional data enables additional Cortex Search examples with real estate listings. 
+                The main workshop focuses on FOMC documents and revenue data.
+            </div>
+        </div>
+        
+        <div class="card">
             <h2>🎉 Module Complete!</h2>
             
             <p>You've successfully set up your Snowflake environment with:</p>
