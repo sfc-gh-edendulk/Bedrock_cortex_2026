@@ -262,18 +262,15 @@ def hybrid_query(user_prompt: str) -> str:
     
     Respond with just the category name."""
     
-    response = bedrock.invoke_model(
-        modelId='anthropic.claude-3-sonnet-20240229-v1:0',
-        body=json.dumps({
-            'anthropic_version': 'bedrock-2023-05-31',
-            'max_tokens': 50,
-            'messages': [
-                {'role': 'user', 'content': classification_prompt}
-            ]
-        })
+    response = bedrock.converse(
+        modelId='amazon.nova-pro-v1:0',
+        messages=[
+            {'role': 'user', 'content': [{'text': classification_prompt}]}
+        ],
+        inferenceConfig={'maxTokens': 50}
     )
     
-    category = json.loads(response['body'].read())['content'][0]['text'].strip().upper()
+    category = response['output']['message']['content'][0]['text'].strip().upper()
     
     # Based on category, this would call the appropriate Cortex tools
     # (In practice, you'd use Snowpark to call Cortex Search or Analyst)

@@ -97,20 +97,20 @@
 <span class="comment">-- Parse all PDFs using Document AI</span>
 <span class="keyword">INSERT INTO</span> FOMC_DOCUMENTS_RAW (FILE_NAME, FILE_URL, PARSED_CONTENT, EXTRACTED_TEXT)
 <span class="keyword">SELECT</span> 
-    RELATIVE_PATH <span class="keyword">AS</span> FILE_NAME,
-    <span class="function">BUILD_SCOPED_FILE_URL</span>(@FOMC_DOCS, RELATIVE_PATH) <span class="keyword">AS</span> FILE_URL,
+    METADATA$FILENAME <span class="keyword">AS</span> FILE_NAME,
+    <span class="function">BUILD_SCOPED_FILE_URL</span>(@FOMC_DOCS, METADATA$FILENAME) <span class="keyword">AS</span> FILE_URL,
     <span class="function">SNOWFLAKE.CORTEX.PARSE_DOCUMENT</span>(
         @FOMC_DOCS,
-        RELATIVE_PATH,
+        METADATA$FILENAME,
         {<span class="string">'mode'</span>: <span class="string">'LAYOUT'</span>}
     ) <span class="keyword">AS</span> PARSED_CONTENT,
     <span class="function">SNOWFLAKE.CORTEX.PARSE_DOCUMENT</span>(
         @FOMC_DOCS,
-        RELATIVE_PATH,
+        METADATA$FILENAME,
         {<span class="string">'mode'</span>: <span class="string">'LAYOUT'</span>}
     ):content::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> EXTRACTED_TEXT
-<span class="keyword">FROM DIRECTORY</span>(@FOMC_DOCS)
-<span class="keyword">WHERE</span> RELATIVE_PATH <span class="keyword">LIKE</span> <span class="string">'%.pdf'</span>;</code></pre>
+<span class="keyword">FROM</span> @FOMC_DOCS
+<span class="keyword">WHERE</span> METADATA$FILENAME <span class="keyword">LIKE</span> <span class="string">'%.pdf'</span>;</code></pre>
             
             <div class="alert alert-warning">
                 <strong>⏱️ Note:</strong> This may take 1-2 minutes to process all PDFs. The Document AI 

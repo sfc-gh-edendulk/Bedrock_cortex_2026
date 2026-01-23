@@ -41,7 +41,7 @@ CREATE OR REPLACE AGENT WORKSHOP_DB.AGENTS.WORKSHOP_AGENT
     FROM SPECIFICATION $$
     {
         "models": {
-            "orchestration": "claude-3-5-sonnet"
+            "orchestration": "amazon-nova-pro"
         },
         "instructions": {
             "orchestration": "You are a helpful assistant that can answer questions about Federal Reserve (FOMC) meeting minutes and company revenue data. Use the fomc_search tool for questions about Fed meetings, interest rates, inflation, and monetary policy. Use the revenue_analyst tool for questions about revenue, sales, profit, and financial metrics.",

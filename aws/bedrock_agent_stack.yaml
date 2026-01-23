@@ -380,7 +380,7 @@ Resources:
       AgentName: workshop-snowflake-agent
       Description: Workshop agent that combines FOMC document search and revenue analytics via Snowflake Cortex
       AgentResourceRoleArn: !GetAtt BedrockAgentRole.Arn
-      FoundationModel: anthropic.claude-3-sonnet-20240229-v1:0
+      FoundationModel: amazon.nova-pro-v1:0
       Instruction: |
         You are a helpful assistant that can answer questions about Federal Reserve (FOMC) meeting minutes and company revenue data.
         
