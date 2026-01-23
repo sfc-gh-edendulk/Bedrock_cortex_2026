@@ -105,7 +105,7 @@
                 <li><strong>User asks a question</strong> via the Streamlit chatbot application</li>
                 <li><strong>Snowpark External Access</strong> sends the prompt to Amazon Bedrock</li>
                 <li><strong>Agents for Amazon Bedrock</strong> receives the prompt and routes to the Foundation Model</li>
-                <li><strong>Claude Sonnet</strong> decides which tool/action group to use based on the question</li>
+                <li><strong>Amazon Nova Pro</strong> decides which tool/action group to use based on the question</li>
                 <li><strong>Action Groups</strong> execute the appropriate Lambda function:
                     <ul>
                         <li><strong>Action Group 1:</strong> Calls Cortex Analyst for structured data questions (revenue, metrics)</li>
@@ -157,7 +157,7 @@
                 <div class="tech-content">
                     <h4>Amazon Bedrock</h4>
                     <p>
-                        A fully managed service that provides access to leading foundation models (Claude, 
+                        A fully managed service that provides access to leading foundation models (Amazon Nova, 
                         Llama, Titan, and more) through a single API. Bedrock handles the heavy lifting 
                         of model hosting, scaling, and security—no infrastructure management required.
                     </p>
@@ -328,7 +328,7 @@
                     <td>AI orchestration running in AWS, calling Snowflake via Lambda</td>
                     <td>
                         <ul>
-                            <li>Access to Claude, Llama, Titan models</li>
+                            <li>Access to Amazon Nova, Llama, Claude models</li>
                             <li>Full AWS service integration</li>
                             <li>Enterprise-grade scalability</li>
                             <li>Flexible action group configuration</li>

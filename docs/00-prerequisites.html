@@ -266,34 +266,26 @@
             
             <p>Configure Amazon Bedrock model access and generate AWS credentials for the workshop.</p>
             
-            <h3>5.1 Enable Bedrock Model Access</h3>
+            <h3>5.1 Bedrock Model Access</h3>
+            
+            <div class="alert alert-success">
+                <strong>✅ Good News:</strong> This workshop uses <strong>Amazon Nova Pro</strong>, which is 
+                automatically enabled for all AWS accounts. No manual model access request is required!
+            </div>
             
             <div class="step">
                 <span class="step-number">1</span>
                 <div class="step-content">
-                    <h4>Navigate to Amazon Bedrock</h4>
-                    <p>In the AWS Console, search for <strong>Amazon Bedrock</strong> and open the service.</p>
-                </div>
-            </div>
-            
-            <div class="step">
-                <span class="step-number">2</span>
-                <div class="step-content">
-                    <h4>Request Model Access</h4>
-                    <ul>
-                        <li>Click on <strong>Model access</strong> in the left sidebar</li>
-                        <li>Click <strong>Manage model access</strong></li>
-                        <li>Find <strong>Anthropic</strong> section and select <strong>Claude 3.5 Sonnet</strong></li>
-                        <li>Click <strong>Request model access</strong></li>
-                    </ul>
-                    <img src="images/modify-model-access.png" alt="Bedrock Model Access - Select Claude 3.5 Sonnet" 
-                         style="width: 100%; max-width: 700px; display: block; margin: 1rem auto; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h4>Verify Amazon Bedrock Access</h4>
+                    <p>In the AWS Console, search for <strong>Amazon Bedrock</strong> and open the service. 
+                    You can optionally browse the <strong>Model catalog</strong> to explore available models.</p>
                 </div>
             </div>
             
             <div class="alert alert-info">
-                <strong>💡 Note:</strong> Model access is typically granted instantly, but may take a few minutes. 
-                You'll see "Access granted" when it's ready.
+                <strong>💡 Note:</strong> Amazon Nova models are AWS's own foundation models and are instantly 
+                available without any approval process. The CloudFormation template will automatically configure 
+                the Bedrock Agent to use Amazon Nova Pro.
             </div>
             
             <h3>5.2 Create IAM User for API Access</h3>
@@ -388,7 +380,7 @@
                 <li>☐ Found your Snowflake account identifier</li>
                 <li>☐ Submitted the registration form</li>
                 <li>☐ Received AWS Workshop Studio access (or will receive at workshop start)</li>
-                <li>☐ Enabled Amazon Bedrock model access for Claude 3.5 Sonnet</li>
+                <li>☐ Verified Amazon Bedrock access (Amazon Nova Pro is auto-enabled)</li>
                 <li>☐ Created IAM user and saved access keys</li>
             </ul>
             

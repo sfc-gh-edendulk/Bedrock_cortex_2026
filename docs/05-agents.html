@@ -75,7 +75,7 @@
             <div class="alert alert-warning">
                 <strong>💡 What is an AI Agent?</strong> An Agent is an AI orchestrator that decides which 
                 tools to use based on the user's question. Amazon Bedrock Agents use foundation models 
-                like Claude and Titan to intelligently route questions to the right data sources.
+                like Amazon Nova to intelligently route questions to the right data sources.
             </div>
         </div>
         
@@ -84,7 +84,7 @@
             
             <p>We'll deploy a Bedrock Agent using CloudFormation that includes:</p>
             <ul>
-                <li><strong>Bedrock Agent:</strong> AI orchestrator using Claude or Titan models</li>
+                <li><strong>Bedrock Agent:</strong> AI orchestrator using Amazon Nova Pro model</li>
                 <li><strong>Lambda Functions:</strong> Action groups that call Snowflake Cortex</li>
                 <li><strong>Secrets Manager:</strong> Secure storage for Snowflake credentials</li>
                 <li><strong>IAM Roles:</strong> Permissions for cross-service access</li>
@@ -371,7 +371,7 @@ $$;</code></pre>
 
 <span class="comment">-- Create native Cortex Agent (no external access needed)</span>
 <span class="keyword">CREATE OR REPLACE CORTEX AGENT</span> WORKSHOP_AGENT
-    MODEL = <span class="string">'claude-3-5-sonnet'</span>
+    MODEL = <span class="string">'amazon-nova-pro'</span>
     TOOLS = (
         {
             <span class="string">'name'</span>: <span class="string">'fomc_search'</span>,

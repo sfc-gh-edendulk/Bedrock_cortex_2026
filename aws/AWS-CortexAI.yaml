@@ -806,7 +806,7 @@ Resources:
       AgentName: !Ref AgentName
       AgentResourceRoleArn: !GetAtt AmazonBedrockAgentsRole.Arn
       AutoPrepare: true
-      FoundationModel: "anthropic.claude-3-5-sonnet-20240620-v1:0"
+      FoundationModel: "amazon.nova-pro-v1:0"
       Instruction: "You are an agent that can handle various tasks. First look at all the tasks below and then decide which task to perform. 
                     1/ answer questions related to revenue, profit, expenses and perfromance of the business of a retail company by using the action group ag-cortex-analyze-revenue. 
                     2/ Helping users do research and finding up-to-date information on airbnb listing and rooms by using action group ag-cortex-search-airbnb-listing. 
