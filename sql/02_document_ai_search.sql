@@ -40,20 +40,20 @@ CREATE OR REPLACE TABLE FOMC_DOCUMENTS_RAW (
 -- PARSE_DOCUMENT extracts text, tables, and structure from PDFs
 INSERT INTO FOMC_DOCUMENTS_RAW (FILE_NAME, FILE_URL, PARSED_CONTENT, EXTRACTED_TEXT)
 SELECT 
-    METADATA$FILENAME AS FILE_NAME,
-    BUILD_SCOPED_FILE_URL(@FOMC_DOCS, METADATA$FILENAME) AS FILE_URL,
+    RELATIVE_PATH AS FILE_NAME,
+    BUILD_SCOPED_FILE_URL(@FOMC_DOCS, RELATIVE_PATH) AS FILE_URL,
     SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
         @FOMC_DOCS,
-        METADATA$FILENAME,
+        RELATIVE_PATH,
         {'mode': 'LAYOUT'}  -- Options: 'LAYOUT' (preserves structure) or 'OCR' (for scanned docs)
     ) AS PARSED_CONTENT,
     SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
         @FOMC_DOCS,
-        METADATA$FILENAME,
+        RELATIVE_PATH,
         {'mode': 'LAYOUT'}
     ):content::VARCHAR AS EXTRACTED_TEXT
-FROM @FOMC_DOCS
-WHERE METADATA$FILENAME LIKE '%.pdf';
+FROM DIRECTORY(@FOMC_DOCS)
+WHERE RELATIVE_PATH LIKE '%.pdf';
 
 -- Verify parsing results
 SELECT 
@@ -65,57 +65,28 @@ LIMIT 5;
 
 -- ============================================================================
 -- STEP 2: CHUNK DOCUMENTS FOR SEARCH
--- Split large documents into searchable chunks
+-- Split large documents into searchable chunks using native Snowflake function
 -- ============================================================================
 
--- Create chunking function using CORTEX
--- This replaces the custom LangChain RecursiveCharacterTextSplitter
-CREATE OR REPLACE FUNCTION CHUNK_TEXT(
-    input_text VARCHAR,
-    chunk_size INT DEFAULT 2000,
-    chunk_overlap INT DEFAULT 300
-)
-RETURNS TABLE (
-    chunk_index INT,
-    chunk_text VARCHAR
-)
-LANGUAGE SQL
-AS
-$$
-    WITH RECURSIVE chunks AS (
-        SELECT 
-            0 AS chunk_index,
-            SUBSTRING(input_text, 1, chunk_size) AS chunk_text,
-            chunk_size - chunk_overlap AS next_start
-        UNION ALL
-        SELECT
-            chunk_index + 1,
-            SUBSTRING(input_text, next_start + 1, chunk_size),
-            next_start + chunk_size - chunk_overlap
-        FROM chunks
-        WHERE next_start < LENGTH(input_text) AND chunk_index < 1000
-    )
-    SELECT chunk_index, chunk_text
-    FROM chunks
-    WHERE LENGTH(chunk_text) > 100
-$$;
-
--- Create the chunks table
-CREATE OR REPLACE TABLE FOMC_DOCS_CHUNKS AS
-SELECT 
+-- Create the chunks table using SPLIT_TEXT_RECURSIVE_CHARACTER
+CREATE OR REPLACE TABLE WORKSHOP_DB.PUBLIC.FOMC_DOCS_CHUNKS AS
+SELECT
     d.FILE_NAME,
     d.FILE_URL,
-    c.CHUNK_INDEX,
-    -- Include file name in chunk for context
-    d.FILE_NAME || ': ' || c.CHUNK_TEXT AS CHUNK,
+    f.INDEX AS CHUNK_INDEX,
+    d.FILE_NAME || ': ' || f.VALUE::VARCHAR AS CHUNK,
     'English' AS LANGUAGE,
-    -- Extract meeting date from filename (e.g., FOMC_Minutes_2024-01-31.pdf)
     TRY_TO_DATE(
         REGEXP_SUBSTR(d.FILE_NAME, '\\d{4}-\\d{2}-\\d{2}'),
         'YYYY-MM-DD'
     ) AS MEETING_DATE
-FROM FOMC_DOCUMENTS_RAW d,
-     TABLE(CHUNK_TEXT(d.EXTRACTED_TEXT, 2000, 300)) c;
+FROM WORKSHOP_DB.PUBLIC.FOMC_DOCUMENTS_RAW d,
+     LATERAL FLATTEN(INPUT => SNOWFLAKE.CORTEX.SPLIT_TEXT_RECURSIVE_CHARACTER(
+         d.EXTRACTED_TEXT,
+         'markdown',
+         2000,
+         300
+     )) f;
 
 -- Verify chunks created
 SELECT 

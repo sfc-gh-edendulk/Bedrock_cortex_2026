@@ -97,20 +97,20 @@
 <span class="comment">-- Parse all PDFs using Document AI</span>
 <span class="keyword">INSERT INTO</span> FOMC_DOCUMENTS_RAW (FILE_NAME, FILE_URL, PARSED_CONTENT, EXTRACTED_TEXT)
 <span class="keyword">SELECT</span> 
-    METADATA$FILENAME <span class="keyword">AS</span> FILE_NAME,
-    <span class="function">BUILD_SCOPED_FILE_URL</span>(@FOMC_DOCS, METADATA$FILENAME) <span class="keyword">AS</span> FILE_URL,
+    RELATIVE_PATH <span class="keyword">AS</span> FILE_NAME,
+    <span class="function">BUILD_SCOPED_FILE_URL</span>(@FOMC_DOCS, RELATIVE_PATH) <span class="keyword">AS</span> FILE_URL,
     <span class="function">SNOWFLAKE.CORTEX.PARSE_DOCUMENT</span>(
         @FOMC_DOCS,
-        METADATA$FILENAME,
+        RELATIVE_PATH,
         {<span class="string">'mode'</span>: <span class="string">'LAYOUT'</span>}
     ) <span class="keyword">AS</span> PARSED_CONTENT,
     <span class="function">SNOWFLAKE.CORTEX.PARSE_DOCUMENT</span>(
         @FOMC_DOCS,
-        METADATA$FILENAME,
+        RELATIVE_PATH,
         {<span class="string">'mode'</span>: <span class="string">'LAYOUT'</span>}
     ):content::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> EXTRACTED_TEXT
-<span class="keyword">FROM</span> @FOMC_DOCS
-<span class="keyword">WHERE</span> METADATA$FILENAME <span class="keyword">LIKE</span> <span class="string">'%.pdf'</span>;</code></pre>
+<span class="keyword">FROM DIRECTORY</span>(@FOMC_DOCS)
+<span class="keyword">WHERE</span> RELATIVE_PATH <span class="keyword">LIKE</span> <span class="string">'%.pdf'</span>;</code></pre>
             
             <div class="alert alert-warning">
                 <strong>⏱️ Note:</strong> This may take 1-2 minutes to process all PDFs. The Document AI 
@@ -130,54 +130,28 @@
         <div class="card">
             <h2>Step 2: Create Document Chunks</h2>
             
-            <p>Large documents need to be split into smaller "chunks" for effective search. Each chunk should be 
-            small enough to be meaningful but large enough to contain useful context.</p>
+            <p>Large documents need to be split into smaller "chunks" for effective search. We'll use Snowflake's native 
+            <code>SPLIT_TEXT_RECURSIVE_CHARACTER</code> function to intelligently split text at natural boundaries.</p>
             
-            <pre><code><span class="comment">-- Create a function to split text into chunks</span>
-<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">CHUNK_TEXT</span>(
-    input_text <span class="keyword">VARCHAR</span>,
-    chunk_size <span class="keyword">INT DEFAULT</span> 2000,
-    chunk_overlap <span class="keyword">INT DEFAULT</span> 300
-)
-<span class="keyword">RETURNS TABLE</span> (
-    chunk_index <span class="keyword">INT</span>,
-    chunk_text <span class="keyword">VARCHAR</span>
-)
-<span class="keyword">LANGUAGE SQL AS</span>
-$$
-    <span class="keyword">WITH RECURSIVE</span> chunks <span class="keyword">AS</span> (
-        <span class="keyword">SELECT</span> 
-            0 <span class="keyword">AS</span> chunk_index,
-            <span class="function">SUBSTRING</span>(input_text, 1, chunk_size) <span class="keyword">AS</span> chunk_text,
-            chunk_size - chunk_overlap <span class="keyword">AS</span> next_start
-        <span class="keyword">UNION ALL</span>
-        <span class="keyword">SELECT</span>
-            chunk_index + 1,
-            <span class="function">SUBSTRING</span>(input_text, next_start + 1, chunk_size),
-            next_start + chunk_size - chunk_overlap
-        <span class="keyword">FROM</span> chunks
-        <span class="keyword">WHERE</span> next_start < <span class="function">LENGTH</span>(input_text) <span class="keyword">AND</span> chunk_index < 1000
-    )
-    <span class="keyword">SELECT</span> chunk_index, chunk_text
-    <span class="keyword">FROM</span> chunks
-    <span class="keyword">WHERE LENGTH</span>(chunk_text) > 100
-$$;</code></pre>
-            
-            <h3>Create the Chunks Table</h3>
-            <pre><code><span class="comment">-- Generate chunks for all documents</span>
-<span class="keyword">CREATE OR REPLACE TABLE</span> FOMC_DOCS_CHUNKS <span class="keyword">AS</span>
-<span class="keyword">SELECT</span> 
+            <pre><code><span class="comment">-- Create the chunks table using native Snowflake function</span>
+<span class="keyword">CREATE OR REPLACE TABLE</span> WORKSHOP_DB.PUBLIC.FOMC_DOCS_CHUNKS <span class="keyword">AS</span>
+<span class="keyword">SELECT</span>
     d.FILE_NAME,
     d.FILE_URL,
-    c.CHUNK_INDEX,
-    d.FILE_NAME || <span class="string">': '</span> || c.CHUNK_TEXT <span class="keyword">AS</span> CHUNK,
+    f.INDEX <span class="keyword">AS</span> CHUNK_INDEX,
+    d.FILE_NAME || <span class="string">': '</span> || f.VALUE::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> CHUNK,
     <span class="string">'English'</span> <span class="keyword">AS</span> LANGUAGE,
     <span class="function">TRY_TO_DATE</span>(
         <span class="function">REGEXP_SUBSTR</span>(d.FILE_NAME, <span class="string">'\\d{4}-\\d{2}-\\d{2}'</span>),
         <span class="string">'YYYY-MM-DD'</span>
     ) <span class="keyword">AS</span> MEETING_DATE
-<span class="keyword">FROM</span> FOMC_DOCUMENTS_RAW d,
-     <span class="keyword">TABLE</span>(<span class="function">CHUNK_TEXT</span>(d.EXTRACTED_TEXT, 2000, 300)) c;
+<span class="keyword">FROM</span> WORKSHOP_DB.PUBLIC.FOMC_DOCUMENTS_RAW d,
+     <span class="keyword">LATERAL FLATTEN</span>(INPUT => <span class="function">SNOWFLAKE.CORTEX.SPLIT_TEXT_RECURSIVE_CHARACTER</span>(
+         d.EXTRACTED_TEXT,
+         <span class="string">'markdown'</span>,
+         2000,
+         300
+     )) f;
 
 <span class="comment">-- Check the results</span>
 <span class="keyword">SELECT</span> 
