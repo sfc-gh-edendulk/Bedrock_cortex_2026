@@ -207,57 +207,36 @@
         </div>
         
         <div class="card">
-            <h2>Step 4: Create a Search Helper Function</h2>
+            <h2>Step 4: Test the Search Service</h2>
             
-            <p>Create a convenient function to search our documents:</p>
+            <p>Test the search service using <code>SEARCH_PREVIEW</code>. This function is designed for testing with literal query strings:</p>
             
-            <pre><code><span class="comment">-- Create a helper function for searching</span>
-<span class="keyword">CREATE OR REPLACE FUNCTION</span> <span class="function">SEARCH_FOMC_DOCS</span>(
-    query_text <span class="keyword">VARCHAR</span>,
-    num_results <span class="keyword">INT DEFAULT</span> 5
-)
-<span class="keyword">RETURNS TABLE</span> (
-    chunk <span class="keyword">VARCHAR</span>,
-    file_name <span class="keyword">VARCHAR</span>,
-    meeting_date <span class="keyword">DATE</span>,
-    relevance_score <span class="keyword">FLOAT</span>
-)
-<span class="keyword">LANGUAGE SQL AS</span>
-$$
-    <span class="keyword">SELECT</span> 
-        result:CHUNK::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> chunk,
-        result:FILE_NAME::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> file_name,
-        result:MEETING_DATE::<span class="keyword">DATE</span> <span class="keyword">AS</span> meeting_date,
-        result:_score::<span class="keyword">FLOAT</span> <span class="keyword">AS</span> relevance_score
-    <span class="keyword">FROM</span> (
-        <span class="keyword">SELECT VALUE AS</span> result
-        <span class="keyword">FROM TABLE</span>(
-            <span class="function">SNOWFLAKE.CORTEX.SEARCH_PREVIEW</span>(
-                <span class="string">'FOMC_SEARCH_SERVICE'</span>,
-                <span class="function">OBJECT_CONSTRUCT</span>(
-                    <span class="string">'query'</span>, query_text,
-                    <span class="string">'columns'</span>, <span class="function">ARRAY_CONSTRUCT</span>(<span class="string">'CHUNK'</span>, <span class="string">'FILE_NAME'</span>, <span class="string">'MEETING_DATE'</span>),
-                    <span class="string">'limit'</span>, num_results
-                )::<span class="keyword">VARCHAR</span>
-            )
-        )
-    )
-$$;</code></pre>
-        </div>
-        
-        <div class="card">
-            <h2>Step 5: Test the Search</h2>
-            
-            <p>Let's try some searches!</p>
+            <div class="alert alert-info">
+                <strong>💡 Note:</strong> <code>SEARCH_PREVIEW</code> is for testing/validation only. For production applications, 
+                use the Python SDK or REST API to query Cortex Search services.
+            </div>
             
             <pre><code><span class="comment">-- Test: Search for inflation-related content</span>
-<span class="keyword">SELECT</span> * <span class="keyword">FROM TABLE</span>(<span class="function">SEARCH_FOMC_DOCS</span>(<span class="string">'inflation expectations'</span>, 3));
+<span class="keyword">SELECT</span> 
+    <span class="function">PARSE_JSON</span>(results):results[0]:CHUNK::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> chunk_1,
+    <span class="function">PARSE_JSON</span>(results):results[0]:FILE_NAME::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> file_1
+<span class="keyword">FROM</span> (
+    <span class="keyword">SELECT</span> <span class="function">SNOWFLAKE.CORTEX.SEARCH_PREVIEW</span>(
+        <span class="string">'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE'</span>,
+        <span class="string">'{"query": "inflation expectations", "columns": ["CHUNK", "FILE_NAME"], "limit": 3}'</span>
+    ) <span class="keyword">AS</span> results
+);
 
 <span class="comment">-- Test: Search for interest rate decisions</span>
-<span class="keyword">SELECT</span> * <span class="keyword">FROM TABLE</span>(<span class="function">SEARCH_FOMC_DOCS</span>(<span class="string">'interest rate decisions'</span>, 3));
-
-<span class="comment">-- Test: Search for employment outlook</span>
-<span class="keyword">SELECT</span> * <span class="keyword">FROM TABLE</span>(<span class="function">SEARCH_FOMC_DOCS</span>(<span class="string">'labor market employment'</span>, 3));</code></pre>
+<span class="keyword">SELECT</span> 
+    <span class="function">PARSE_JSON</span>(results):results[0]:CHUNK::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> chunk_1,
+    <span class="function">PARSE_JSON</span>(results):results[0]:FILE_NAME::<span class="keyword">VARCHAR</span> <span class="keyword">AS</span> file_1
+<span class="keyword">FROM</span> (
+    <span class="keyword">SELECT</span> <span class="function">SNOWFLAKE.CORTEX.SEARCH_PREVIEW</span>(
+        <span class="string">'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE'</span>,
+        <span class="string">'{"query": "interest rate decisions", "columns": ["CHUNK", "FILE_NAME"], "limit": 3}'</span>
+    ) <span class="keyword">AS</span> results
+);</code></pre>
             
             <div class="alert alert-success">
                 <strong>✅ Try It!</strong> Experiment with different queries. Notice how semantic search finds 
@@ -266,7 +245,7 @@ $$;</code></pre>
         </div>
         
         <div class="card">
-            <h2>Step 6: Test with a Streamlit App (Optional)</h2>
+            <h2>Step 5: Test with a Streamlit App (Optional)</h2>
             
             <p>You can create a simple Streamlit app to test your Cortex Search service interactively:</p>
             
@@ -296,7 +275,7 @@ $$;</code></pre>
                 <li>✅ Parsed PDF documents using Document AI</li>
                 <li>✅ Split documents into searchable chunks</li>
                 <li>✅ Created a Cortex Search service</li>
-                <li>✅ Built a helper function for easy searching</li>
+                <li>✅ Tested search with SEARCH_PREVIEW</li>
             </ul>
             
             <p>In the next module, we'll set up Cortex Analyst to query structured revenue data using natural language.</p>

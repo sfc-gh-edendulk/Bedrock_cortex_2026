@@ -147,45 +147,34 @@ FROM TABLE(
 );
 
 -- ============================================================================
--- STEP 5: CREATE HELPER FUNCTION FOR SEARCH
--- Wraps the search service for easy use in agents
+-- STEP 5: TEST THE SEARCH SERVICE
+-- Note: SEARCH_PREVIEW only works with literal strings (for testing/validation)
+-- For production use, query via Python SDK or REST API
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION SEARCH_FOMC_DOCS(
-    query_text VARCHAR,
-    num_results INT DEFAULT 5
-)
-RETURNS TABLE (
-    chunk VARCHAR,
-    file_name VARCHAR,
-    meeting_date DATE,
-    relevance_score FLOAT
-)
-LANGUAGE SQL
-AS
-$$
-    SELECT 
-        result:CHUNK::VARCHAR AS chunk,
-        result:FILE_NAME::VARCHAR AS file_name,
-        result:MEETING_DATE::DATE AS meeting_date,
-        result:_score::FLOAT AS relevance_score
-    FROM (
-        SELECT VALUE AS result
-        FROM TABLE(
-            SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
-                'FOMC_SEARCH_SERVICE',
-                OBJECT_CONSTRUCT(
-                    'query', query_text,
-                    'columns', ARRAY_CONSTRUCT('CHUNK', 'FILE_NAME', 'MEETING_DATE'),
-                    'limit', num_results
-                )::VARCHAR
-            )
-        )
-    )
-$$;
+-- Test search: inflation
+SELECT 
+    PARSE_JSON(results):results[0]:CHUNK::VARCHAR AS chunk_1,
+    PARSE_JSON(results):results[0]:FILE_NAME::VARCHAR AS file_1,
+    PARSE_JSON(results):results[1]:CHUNK::VARCHAR AS chunk_2,
+    PARSE_JSON(results):results[1]:FILE_NAME::VARCHAR AS file_2
+FROM (
+    SELECT SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+        'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE',
+        '{"query": "inflation expectations", "columns": ["CHUNK", "FILE_NAME", "MEETING_DATE"], "limit": 3}'
+    ) AS results
+);
 
--- Test the helper function
-SELECT * FROM TABLE(SEARCH_FOMC_DOCS('What decisions were made about interest rates?', 3));
+-- Test search: interest rates
+SELECT 
+    PARSE_JSON(results):results[0]:CHUNK::VARCHAR AS chunk_1,
+    PARSE_JSON(results):results[0]:FILE_NAME::VARCHAR AS file_1
+FROM (
+    SELECT SNOWFLAKE.CORTEX.SEARCH_PREVIEW(
+        'WORKSHOP_DB.PUBLIC.FOMC_SEARCH_SERVICE',
+        '{"query": "interest rate decisions", "columns": ["CHUNK", "FILE_NAME"], "limit": 3}'
+    ) AS results
+);
 
 -- ============================================================================
 -- VERIFICATION
