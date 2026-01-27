@@ -66,11 +66,6 @@ tables:
           - "2024-01-01"
           - "2024-06-15"
           - "2024-09-30"
-    time_dimensions:
-      - name: date
-        description: Date dimension for time-based analysis
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Total revenue in USD for the day
@@ -118,11 +113,6 @@ tables:
           - "Clothing"
           - "Home & Garden"
           - "Sports"
-    time_dimensions:
-      - name: date
-        description: Date dimension for time-based analysis
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Revenue in USD for the product line
@@ -165,11 +155,6 @@ tables:
           - "Europe"
           - "Asia Pacific"
           - "Latin America"
-    time_dimensions:
-      - name: date
-        description: Date dimension for time-based analysis
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Revenue in USD for the region

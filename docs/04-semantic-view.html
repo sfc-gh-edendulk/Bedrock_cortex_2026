@@ -138,11 +138,6 @@ tables:
         description: The calendar date of the revenue record
         expr: DATE
         data_type: DATE
-    time_dimensions:
-      - name: date
-        description: Date dimension for time-based analysis
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Total revenue in USD for the day
@@ -189,10 +184,6 @@ tables:
           - "Electronics"
           - "Clothing"
           - "Home & Garden"
-    time_dimensions:
-      - name: date
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Revenue for the product line
@@ -224,10 +215,6 @@ tables:
           - "North America"
           - "Europe"
           - "Asia Pacific"
-    time_dimensions:
-      - name: date
-        expr: DATE
-        data_type: DATE
     measures:
       - name: revenue
         description: Revenue for the region
