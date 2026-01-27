@@ -263,7 +263,7 @@ def hybrid_query(user_prompt: str) -> str:
     Respond with just the category name."""
     
     response = bedrock.converse(
-        modelId='amazon.nova-pro-v1:0',
+        modelId='us.amazon.nova-pro-v1:0',
         messages=[
             {'role': 'user', 'content': [{'text': classification_prompt}]}
         ],
