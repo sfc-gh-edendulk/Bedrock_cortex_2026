@@ -94,6 +94,10 @@
     PARSED_AT <span class="keyword">TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP</span>()
 );
 
+<span class="comment">-- Enable directory on the stage and refresh</span>
+<span class="keyword">ALTER STAGE</span> FOMC_DOCS <span class="keyword">SET DIRECTORY</span> = (ENABLE = TRUE);
+<span class="keyword">ALTER STAGE</span> FOMC_DOCS REFRESH;
+
 <span class="comment">-- Parse all PDFs using Document AI</span>
 <span class="keyword">INSERT INTO</span> FOMC_DOCUMENTS_RAW (FILE_NAME, FILE_URL, PARSED_CONTENT, EXTRACTED_TEXT)
 <span class="keyword">SELECT</span> 
