@@ -116,11 +116,11 @@
 <span class="keyword">USE SCHEMA</span> REVENUE_TIMESERIES;
 <span class="keyword">USE WAREHOUSE</span> WORKSHOP_WH;
 
-<span class="keyword">CREATE OR REPLACE SEMANTIC VIEW</span> REVENUE_SEMANTIC_VIEW
-  COMMENT = <span class="string">'Revenue analytics semantic model for Cortex Analyst'</span>
-<span class="keyword">AS</span> 
+<span class="comment">-- Create semantic view from YAML using stored procedure</span>
+<span class="keyword">CALL</span> <span class="function">SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML</span>(
+  <span class="string">'WORKSHOP_DB.REVENUE_TIMESERIES'</span>,
 $$
-name: Revenue Analytics
+name: REVENUE_SEMANTIC_VIEW
 description: >
   Semantic model for analyzing company revenue data across time, 
   products, and regions. Use this to answer questions about revenue 
@@ -255,7 +255,8 @@ verified_queries:
       FROM WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE_BY_REGION
       GROUP BY sales_region
       ORDER BY total_revenue DESC
-$$;</code></pre>
+$$
+);</code></pre>
         </div>
         
         <div class="card">

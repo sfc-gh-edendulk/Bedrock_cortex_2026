@@ -42,12 +42,10 @@ SELECT * FROM DAILY_REVENUE_BY_REGION LIMIT 5;
 -- This replaces the YAML semantic model file
 -- ============================================================================
 
-CREATE OR REPLACE SEMANTIC VIEW REVENUE_SEMANTIC_VIEW
-  COMMENT = 'Revenue analytics semantic model for Cortex Analyst - replaces YAML file'
-AS 
--- Define semantic model using YAML syntax within the view
+CALL SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML(
+  'WORKSHOP_DB.REVENUE_TIMESERIES',
 $$
-name: Revenue Analytics
+name: REVENUE_SEMANTIC_VIEW
 description: >
   Semantic model for analyzing company revenue data across time, products, and regions.
   Use this to answer questions about revenue trends, profitability, and forecasts.
@@ -228,7 +226,8 @@ verified_queries:
       FROM WORKSHOP_DB.REVENUE_TIMESERIES.DAILY_REVENUE
       GROUP BY 1
       ORDER BY 1
-$$;
+$$
+);
 
 -- ============================================================================
 -- STEP 3: VERIFY SEMANTIC VIEW
