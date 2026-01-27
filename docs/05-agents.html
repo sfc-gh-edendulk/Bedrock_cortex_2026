@@ -105,7 +105,7 @@
             
             <ol start="3">
                 <li>Go to <strong>S3</strong> in the AWS Management Console</li>
-                <li>Create a new S3 bucket with any unique name (e.g., <code>my-workshop-bucket-12345</code>). <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html" target="_blank">How to create an S3 bucket</a></li>
+                <li>Create a new S3 bucket. The name must be <strong>globally unique</strong> - use your name and today's date with no hyphens (e.g., <code>johnsmith20260127</code>). <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html" target="_blank">How to create an S3 bucket</a></li>
                 <li>Create a folder named <code>snowflake_layer</code> in your bucket</li>
                 <li>Upload <code>snowflake_modules.zip</code> to the <code>snowflake_layer</code> folder</li>
                 <li><strong>Note your bucket name</strong> - you'll enter it as the <code>LambdaLayerS3Bucket</code> parameter in CloudFormation</li>
