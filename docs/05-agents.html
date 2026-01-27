@@ -134,7 +134,7 @@
             
             <h3>Step 3: Configure Stack Parameters</h3>
             
-            <p>Fill in the following parameters:</p>
+            <p>Fill in the following <strong>required</strong> parameters:</p>
             
             <table>
                 <tr>
@@ -149,8 +149,8 @@
                 </tr>
                 <tr>
                     <td><code>SnowflakeUser</code></td>
-                    <td>Your username</td>
-                    <td>The user you log in with (default: workshop_user)</td>
+                    <td><strong>Your Snowflake username</strong></td>
+                    <td>Change from default - use the username you log in with</td>
                 </tr>
                 <tr>
                     <td><code>SnowflakePassword</code></td>
@@ -159,15 +159,20 @@
                 </tr>
                 <tr>
                     <td><code>LambdaLayerS3Bucket</code></td>
-                    <td>Your S3 bucket name</td>
-                    <td>The bucket where you uploaded <code>snowflake_modules.zip</code></td>
+                    <td><strong>Your S3 bucket name</strong></td>
+                    <td>The bucket you created (e.g., <code>johnsmith20260127</code>)</td>
                 </tr>
                 <tr>
                     <td><code>CortexSearchFomcService</code></td>
-                    <td><code>fomc_meeting</code></td>
+                    <td><code>FOMC_SEARCH_SERVICE</code></td>
                     <td>Your Cortex Search service name for FOMC docs</td>
                 </tr>
             </table>
+            
+            <div class="alert alert-warning">
+                <strong>⚠️ Don't skip these!</strong> You must fill in <code>SnowflakeUser</code> (your actual username) 
+                and <code>LambdaLayerS3Bucket</code> (your S3 bucket name). The stack will fail if these are left empty or at defaults.
+            </div>
             
             <p>Keep the remaining parameters at their default values unless you customized your Snowflake setup:</p>
             <ul>
