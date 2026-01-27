@@ -225,30 +225,7 @@ SHOW SEMANTIC VIEWS IN SCHEMA REVENUE_TIMESERIES;
 DESCRIBE SEMANTIC VIEW REVENUE_SEMANTIC_VIEW;
 
 -- ============================================================================
--- STEP 4: TEST WITH CORTEX ANALYST
--- ============================================================================
-
--- Test query using the semantic view
--- Note: This uses the REST API format that Cortex Analyst expects
-
--- Example: Create a test function to query the semantic view
-CREATE OR REPLACE FUNCTION TEST_ANALYST_QUERY(question VARCHAR)
-RETURNS TABLE (
-    generated_sql VARCHAR,
-    answer VARCHAR
-)
-LANGUAGE SQL
-AS
-$$
-    -- This is a placeholder - actual Cortex Analyst queries go through the REST API
-    -- or the agent interface. This function demonstrates the semantic view is accessible.
-    SELECT 
-        'SELECT SUM(revenue) FROM DAILY_REVENUE' AS generated_sql,
-        'Query would be processed by Cortex Analyst' AS answer
-$$;
-
--- ============================================================================
--- STEP 5: GRANT PERMISSIONS
+-- STEP 4: GRANT PERMISSIONS
 -- ============================================================================
 
 -- Grant select on semantic view for querying
